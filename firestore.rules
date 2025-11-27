@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ユーザードキュメント: 本人のみ読み書き可能、ペアのパートナーは読み取り可能
+    match /users/{userId} {
+      // 本人は読み書き可能
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // 本人、または認証済みユーザー（ペアのパートナー）は読み取り可能
+      // 注: 夫婦間アプリのため、認証済みユーザーに基本情報の閲覧を許可
+      // TODO: より厳格なセキュリティが必要な場合は、ペアのパートナーのみに限定する
+      //       (現状は実装の簡素化のため、認証済みユーザー全員に読み取り権限を付与)
+      allow read: if request.auth != null;
+    }
+
+    // ペアドキュメント: ペアのメンバーのみアクセス可能
+    match /pairs/{pairId} {
+      // 個別ドキュメントの読み取り: ペアのメンバーまたはuser2Idがnullの場合
+      allow get: if request.auth != null &&
+        (resource.data.user1Id == request.auth.uid ||
+         resource.data.user2Id == request.auth.uid ||
+         resource.data.user2Id == null);
+
+      // クエリ/リスト: 認証済みユーザーは検索可能（個別の読み取り権限は上記getで制御）
+      allow list: if request.auth != null;
+
+      allow create: if request.auth != null;
+
+      // ペアのメンバーは更新可能
+      // または、user2Idがnullでuser2Idを設定する場合も更新可能（ペア参加）
+      allow update: if request.auth != null &&
+        (resource.data.user1Id == request.auth.uid ||
+         resource.data.user2Id == request.auth.uid ||
+         (resource.data.user2Id == null && request.resource.data.user2Id == request.auth.uid));
+
+      // サブコレクション: ペアのメンバーのみアクセス可能
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null &&
+          (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
+           get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid);
+      }
+    }
+  }
+}

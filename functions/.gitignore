@@ -1,0 +1,13 @@
+# Compiled JavaScript files
+lib/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log
+yarn-error.log
+firebase-debug.log

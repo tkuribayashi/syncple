@@ -13,7 +13,6 @@ export default function MessagesPage() {
   const { messages, loading, sendMessage } = useMessages(userProfile?.pairId || null);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const [messageInput, setMessageInput] = useState('');
-  const [showQuickMessages, setShowQuickMessages] = useState(true);
   const [sending, setSending] = useState(false);
 
   const handleSendMessage = async (content: string) => {
@@ -49,16 +48,19 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="card h-[calc(100vh-200px)] flex flex-col">
-        <div className="border-b pb-4 mb-4">
+    <div className="h-[calc(100vh-80px)] md:h-screen flex flex-col">
+      <div className="flex-none max-w-4xl w-full mx-auto p-4 pb-2">
+        <div>
           <h1 className="text-2xl font-bold">メッセージ</h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mt-1">
             {partner?.displayName || 'パートナー'}とのメッセージ
           </p>
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+      <div className="flex-1 overflow-hidden">
+        <div className="max-w-4xl mx-auto px-4 h-full">
+          <div className="card h-full overflow-y-auto space-y-3">
           {loading ? (
             <p className="text-center text-gray-500">読み込み中...</p>
           ) : messages.length === 0 ? (
@@ -89,19 +91,15 @@ export default function MessagesPage() {
               );
             })
           )}
+          </div>
         </div>
+      </div>
 
-        {showQuickMessages && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">クイックメッセージ</h3>
-              <button
-                onClick={() => setShowQuickMessages(false)}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
-                閉じる
-              </button>
-            </div>
+      {/* 固定入力エリア */}
+      <div className="flex-none border-t bg-white">
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+            <h3 className="text-xs font-semibold text-gray-700 mb-2">クイックメッセージ</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {quickMessages.map((template, index) => (
                 <button
@@ -115,34 +113,25 @@ export default function MessagesPage() {
               ))}
             </div>
           </div>
-        )}
 
-        {!showQuickMessages && (
-          <button
-            onClick={() => setShowQuickMessages(true)}
-            className="mb-4 text-sm text-blue-600 hover:text-blue-700"
-          >
-            クイックメッセージを表示
-          </button>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            placeholder="メッセージを入力..."
-            className="flex-1 input"
-            disabled={sending}
-          />
-          <button
-            type="submit"
-            disabled={sending || !messageInput.trim()}
-            className="btn btn-primary px-6 disabled:opacity-50"
-          >
-            {sending ? '送信中...' : '送信'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              placeholder="メッセージを入力..."
+              className="flex-1 input"
+              disabled={sending}
+            />
+            <button
+              type="submit"
+              disabled={sending || !messageInput.trim()}
+              className="btn btn-primary px-6 disabled:opacity-50"
+            >
+              {sending ? '送信中...' : '送信'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

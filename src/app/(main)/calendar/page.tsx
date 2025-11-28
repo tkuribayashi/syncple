@@ -84,25 +84,41 @@ export default function CalendarPage() {
                     {daySchedules.length === 0 ? (
                       <p className="text-sm text-gray-400 text-center py-2">予定なし</p>
                     ) : (
-                      daySchedules.map((schedule) => (
-                        <Link
-                          key={schedule.id}
-                          href={`/calendar/${schedule.id}`}
-                          className={`block p-3 rounded-lg ${
-                            schedule.userId === user?.uid
-                              ? 'bg-pink-100 hover:bg-pink-200'
-                              : 'bg-purple-100 hover:bg-purple-200'
-                          }`}
-                        >
-                          <div className="font-medium">{schedule.title}</div>
-                          {!schedule.isAllDay && schedule.startTime && (
-                            <div className="text-sm text-gray-600 mt-1">
-                              {schedule.startTime}
-                              {schedule.endTime && ` - ${schedule.endTime}`}
+                      daySchedules.map((schedule) => {
+                        const isOwnSchedule = schedule.userId === user?.uid;
+                        const scheduleName = isOwnSchedule
+                          ? userProfile?.displayName || '自分'
+                          : partner?.displayName || 'パートナー';
+
+                        return (
+                          <Link
+                            key={schedule.id}
+                            href={`/calendar/${schedule.id}`}
+                            className={`block p-3 rounded-lg border-2 ${
+                              isOwnSchedule
+                                ? 'bg-pink-50 border-pink-300 hover:bg-pink-100'
+                                : 'bg-purple-50 border-purple-300 hover:bg-purple-100'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                                isOwnSchedule
+                                  ? 'bg-pink-200 text-pink-800'
+                                  : 'bg-purple-200 text-purple-800'
+                              }`}>
+                                {scheduleName}
+                              </span>
                             </div>
-                          )}
-                        </Link>
-                      ))
+                            <div className="font-medium">{schedule.title}</div>
+                            {!schedule.isAllDay && schedule.startTime && (
+                              <div className="text-sm text-gray-600 mt-1">
+                                {schedule.startTime}
+                                {schedule.endTime && ` - ${schedule.endTime}`}
+                              </div>
+                            )}
+                          </Link>
+                        );
+                      })
                     )}
                   </div>
                 </div>

@@ -24,6 +24,11 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateDisplayName: (newDisplayName: string) => Promise<void>;
+  fcm: {
+    notificationPermission: NotificationPermission;
+    requestPermission: () => Promise<boolean>;
+    isRequesting: boolean;
+  };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // FCMトークンの初期化
-  useFCMToken(user?.uid || null);
+  const fcm = useFCMToken(user?.uid || null);
 
   useEffect(() => {
     const authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -171,7 +176,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signInWithGoogle, signUp, signIn, signOut, updateDisplayName }}>
+    <AuthContext.Provider value={{
+      user,
+      userProfile,
+      loading,
+      signInWithGoogle,
+      signUp,
+      signIn,
+      signOut,
+      updateDisplayName,
+      fcm: {
+        notificationPermission: fcm.notificationPermission,
+        requestPermission: fcm.requestPermission,
+        isRequesting: fcm.isRequesting
+      }
+    }}>
       {children}
     </AuthContext.Provider>
   );

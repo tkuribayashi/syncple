@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { getToken, onMessage } from 'firebase/messaging';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { getToken } from 'firebase/messaging';
 import { doc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { getMessagingInstance } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
@@ -8,81 +8,101 @@ export function useFCMToken(userId: string | null) {
   const [token, setToken] = useState<string | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const tokenRef = useRef<string | null>(null);
+  const [isRequesting, setIsRequesting] = useState(false);
 
+  // 通知許可をリクエストする関数（ユーザーアクションから呼び出す）
+  const requestPermission = useCallback(async () => {
+    if (!userId) {
+      return false;
+    }
+
+    if (!('Notification' in window)) {
+      return false;
+    }
+
+    setIsRequesting(true);
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+
+      if (permission !== 'granted') {
+        return false;
+      }
+
+      // FCMトークンを取得して保存
+      await initializeFCMToken(userId);
+      return true;
+    } catch (error) {
+      console.error('通知許可のリクエストに失敗:', error);
+      return false;
+    } finally {
+      setIsRequesting(false);
+    }
+  }, [userId]);
+
+  // FCMトークンの取得と保存
+  const initializeFCMToken = async (uid: string) => {
+    try {
+      const messaging = await getMessagingInstance();
+      if (!messaging) {
+        return;
+      }
+
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          await navigator.serviceWorker.ready;
+
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+          if (!vapidKey) {
+            console.error('VAPID key not found');
+            return;
+          }
+
+          const currentToken = await getToken(messaging, {
+            vapidKey,
+            serviceWorkerRegistration: registration,
+          });
+
+          if (currentToken) {
+            setToken(currentToken);
+            tokenRef.current = currentToken;
+
+            // このデバイスのトークンのみを保存（重複を防ぐため配列を上書き）
+            const userRef = doc(db, 'users', uid);
+            await setDoc(userRef, {
+              fcmTokens: [currentToken],
+            }, { merge: true });
+          }
+        } catch (swError) {
+          console.error('Service Worker registration failed:', swError);
+        }
+      }
+
+      // Service Workerが全ての通知を処理するため、フォアグラウンドハンドラは不要
+    } catch (error) {
+      console.error('Error initializing FCM:', error);
+    }
+  };
+
+  // 初回ロード時に通知許可の状態を確認
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  // 既に許可されている場合は自動的にトークンを取得
   useEffect(() => {
     if (!userId) return;
 
-    const initializeFCM = async () => {
-      try {
-        // 通知許可をリクエスト
-        const permission = await Notification.requestPermission();
-        setNotificationPermission(permission);
+    if (Notification.permission === 'granted') {
+      initializeFCMToken(userId);
+    }
+  }, [userId]);
 
-        if (permission !== 'granted') {
-          return;
-        }
-
-        // Messagingインスタンスを取得
-        const messaging = await getMessagingInstance();
-        if (!messaging) {
-          return;
-        }
-
-        // サービスワーカーを登録
-        if ('serviceWorker' in navigator) {
-          try {
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-
-            // Service Workerがアクティブになるまで待つ
-            await navigator.serviceWorker.ready;
-
-            // FCMトークンを取得
-            const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-            if (!vapidKey) {
-              console.error('VAPID key not found');
-              return;
-            }
-
-            const currentToken = await getToken(messaging, {
-              vapidKey,
-              serviceWorkerRegistration: registration,
-            });
-
-            if (currentToken) {
-              setToken(currentToken);
-              tokenRef.current = currentToken;
-
-              // Firestoreにトークンを保存
-              const userRef = doc(db, 'users', userId);
-              await setDoc(userRef, {
-                fcmTokens: arrayUnion(currentToken),
-              }, { merge: true });
-            }
-          } catch (swError) {
-            console.error('Service Worker registration failed:', swError);
-          }
-        }
-
-        // フォアグラウンドメッセージの受信
-        onMessage(messaging, (payload) => {
-          // フォアグラウンドでもカスタム通知を表示
-          if (payload.notification) {
-            new Notification(payload.notification.title || 'New Message', {
-              body: payload.notification.body || '',
-              icon: '/icon-192x192.png',
-              tag: payload.data?.type || 'notification',
-              requireInteraction: false,
-            });
-          }
-        });
-      } catch (error) {
-        console.error('Error initializing FCM:', error);
-      }
-    };
-
-    initializeFCM();
-
-    // クリーンアップ: トークンを削除
+  // クリーンアップ
+  useEffect(() => {
     return () => {
       if (tokenRef.current && userId) {
         const userRef = doc(db, 'users', userId);
@@ -93,5 +113,10 @@ export function useFCMToken(userId: string | null) {
     };
   }, [userId]);
 
-  return { token, notificationPermission };
+  return {
+    token,
+    notificationPermission,
+    requestPermission,
+    isRequesting
+  };
 }

@@ -43,9 +43,15 @@ const messaging = firebase.messaging();
 
 // バックグラウンドメッセージの処理
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.notification?.title || 'New Message';
+  // notification payloadがある場合は自動表示されるため、ここでは表示しない
+  if (payload.notification) {
+    return;
+  }
+
+  // data-only messageの場合のみ手動で表示
+  const notificationTitle = payload.data?.title || 'New Message';
   const notificationOptions = {
-    body: payload.notification?.body || '',
+    body: payload.data?.body || '',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
     tag: payload.data?.type || 'notification',

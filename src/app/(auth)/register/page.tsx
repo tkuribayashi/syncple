@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,6 +16,13 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 本番環境ではログインページにリダイレクト
+  useEffect(() => {
+    if (!isDevelopment) {
+      router.replace('/login');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +55,22 @@ export default function RegisterPage() {
     }
   };
 
+  if (!isDevelopment) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400">
+        <div className="text-white">ログインページにリダイレクト中...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">新規登録</h1>
             <p className="text-gray-600">Syncpleへようこそ</p>
+            <p className="text-xs text-orange-600 mt-2">開発モード（メール認証）</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -83,7 +101,11 @@ export default function RegisterPage() {
                 className="input"
                 required
                 autoComplete="email"
+                placeholder="test+alias@example.com"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                開発用: +エイリアスでテストアカウント作成可能
+              </p>
             </div>
 
             <div>

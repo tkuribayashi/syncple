@@ -77,11 +77,11 @@ export function usePair() {
     const pairRef = doc(collection(db, 'pairs'));
     await setDoc(pairRef, pairData);
 
-    // ユーザーのpairIdを更新
-    await updateDoc(doc(db, 'users', user.uid), {
+    // ユーザーのpairIdを更新（merge: trueでドキュメントが存在しない場合も安全）
+    await setDoc(doc(db, 'users', user.uid), {
       pairId: pairRef.id,
       updatedAt: Timestamp.now(),
-    });
+    }, { merge: true });
 
     return { pairId: pairRef.id, inviteCode };
   };
@@ -112,15 +112,15 @@ export function usePair() {
     }
 
     // ペアに参加
-    await updateDoc(doc(db, 'pairs', pairDoc.id), {
+    await setDoc(doc(db, 'pairs', pairDoc.id), {
       user2Id: user.uid,
-    });
+    }, { merge: true });
 
-    // ユーザーのpairIdを更新
-    await updateDoc(doc(db, 'users', user.uid), {
+    // ユーザーのpairIdを更新（merge: trueでドキュメントが存在しない場合も安全）
+    await setDoc(doc(db, 'users', user.uid), {
       pairId: pairDoc.id,
       updatedAt: Timestamp.now(),
-    });
+    }, { merge: true });
 
     return pairDoc.id;
   };

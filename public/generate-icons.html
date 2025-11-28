@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Icons</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>アイコン生成</h1>
+  <p>以下のボタンをクリックしてアイコンをダウンロードしてください。</p>
+
+  <div id="canvas-container"></div>
+
+  <div>
+    <h3>通知アイコン</h3>
+    <button onclick="downloadIcon(192)">192x192 ダウンロード</button>
+    <button onclick="downloadIcon(512)">512x512 ダウンロード</button>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h3>Favicon</h3>
+    <button onclick="downloadFavicon(16)">16x16 (favicon-16x16.png)</button>
+    <button onclick="downloadFavicon(32)">32x32 (favicon-32x32.png)</button>
+    <button onclick="downloadFavicon(180)">180x180 (apple-touch-icon.png)</button>
+  </div>
+
+  <script>
+    function createIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // パステルカラーのグラデーション背景
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#FFB3BA');    // パステルピンク
+      gradient.addColorStop(0.5, '#BAFFC9');  // パステルグリーン
+      gradient.addColorStop(1, '#BAE1FF');    // パステルブルー
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // 中央に円を描画
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size * 0.35;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 内側の小さい円（メッセージアイコン風）
+      ctx.fillStyle = '#FFB3BA';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 吹き出しのような三角形を追加（サイズが16px以上の場合のみ）
+      if (size >= 16) {
+        const triangleSize = radius * 0.3;
+        ctx.fillStyle = '#FFB3BA';
+        ctx.beginPath();
+        ctx.moveTo(centerX - triangleSize, centerY + radius * 0.6);
+        ctx.lineTo(centerX, centerY + radius * 0.6 + triangleSize);
+        ctx.lineTo(centerX, centerY + radius * 0.6);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      return canvas;
+    }
+
+    function displayIcons() {
+      const container = document.getElementById('canvas-container');
+      const sizes = [16, 32, 180, 192, 512];
+
+      sizes.forEach(size => {
+        const canvas = createIcon(size);
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'inline-block';
+        wrapper.style.textAlign = 'center';
+        wrapper.style.margin = '10px';
+
+        const label = document.createElement('div');
+        label.textContent = `${size}x${size}`;
+        label.style.marginBottom = '5px';
+        label.style.fontWeight = 'bold';
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(canvas);
+        container.appendChild(wrapper);
+      });
+    }
+
+    function downloadIcon(size) {
+      const canvas = createIcon(size);
+      const link = document.createElement('a');
+      link.download = `icon-${size}x${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadFavicon(size) {
+      const canvas = createIcon(size);
+      const link = document.createElement('a');
+
+      // サイズに応じてファイル名を変更
+      if (size === 180) {
+        link.download = 'apple-touch-icon.png';
+      } else {
+        link.download = `favicon-${size}x${size}.png`;
+      }
+
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // ページ読み込み時にアイコンを表示
+    displayIcons();
+  </script>
+</body>
+</html>

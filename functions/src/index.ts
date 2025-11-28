@@ -39,8 +39,9 @@ export const onMessageCreated = functions.firestore
       const senderDoc = await admin.firestore().doc(`users/${senderId}`).get();
       const senderName = senderDoc.exists ? senderDoc.data()?.displayName : '不明';
 
-      // プッシュ通知を送信
-      const payload = {
+      // プッシュ通知を送信（FCM HTTP v1 API）
+      const messages = receiverData.fcmTokens.map((token: string) => ({
+        token: token,
         notification: {
           title: `${senderName}からメッセージ`,
           body: message.content,
@@ -49,9 +50,15 @@ export const onMessageCreated = functions.firestore
           type: 'message',
           pairId: pairId,
         },
-      };
+        webpush: {
+          fcmOptions: {
+            link: '/',
+          },
+        },
+      }));
 
-      await admin.messaging().sendToDevice(receiverData.fcmTokens, payload);
+      const response = await admin.messaging().sendEach(messages);
+      console.log('FCM response:', JSON.stringify(response));
 
       console.log('Notification sent successfully');
     } catch (error) {

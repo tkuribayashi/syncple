@@ -160,7 +160,12 @@ export default function HomePage() {
                       <p className="font-bold text-base">{schedule.title}</p>
                       <p className="text-sm text-gray-600 mt-1">
                         {categories[schedule.category]}
-                        {!schedule.isAllDay && schedule.startTime && ` • ${schedule.startTime}`}
+                        {!schedule.isAllDay && schedule.startTime && (
+                          <>
+                            {` • ${schedule.startTime}`}
+                            {schedule.endTime && ` - ${schedule.endTime}`}
+                          </>
+                        )}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {isMine ? 'あなた' : partner?.displayName}

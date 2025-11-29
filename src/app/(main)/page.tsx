@@ -12,6 +12,7 @@ import { useScheduleCategories } from '@/hooks/useScheduleCategories';
 import { USER_STATUSES } from '@/types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import DinnerStatusCard from '@/components/DinnerStatusCard';
 
 export default function HomePage() {
   const router = useRouter();
@@ -127,6 +128,9 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* 今日の晩ご飯ステータス */}
+      <DinnerStatusCard pairId={userProfile?.pairId || null} />
+
       {/* 今日の予定 */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">
@@ -156,7 +160,12 @@ export default function HomePage() {
                       <p className="font-bold text-base">{schedule.title}</p>
                       <p className="text-sm text-gray-600 mt-1">
                         {categories[schedule.category]}
-                        {!schedule.isAllDay && schedule.startTime && ` • ${schedule.startTime}`}
+                        {!schedule.isAllDay && schedule.startTime && (
+                          <>
+                            {` • ${schedule.startTime}`}
+                            {schedule.endTime && ` - ${schedule.endTime}`}
+                          </>
+                        )}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {isMine ? 'あなた' : partner?.displayName}

@@ -66,6 +66,14 @@ export interface ShoppingItem {
   createdAt: Timestamp;
 }
 
+export interface DinnerStatus {
+  id?: string;
+  userId: string;
+  date: string; // "YYYY-MM-DD"
+  status: 'alone' | 'cooking' | 'cooking_together' | 'undecided';
+  updatedAt: Timestamp;
+}
+
 export const SCHEDULE_CATEGORIES = {
   remote: '在宅勤務',
   office: '出社',
@@ -91,3 +99,12 @@ export const DEFAULT_QUICK_MESSAGES = [
   '了解',
   'ありがとう',
 ];
+
+export const DINNER_STATUSES = {
+  alone: '1人で済ませる',
+  cooking: '2人分作る',
+  cooking_together: '一緒に作る',
+  undecided: '未定',
+} as const;
+
+export type DinnerStatusType = keyof typeof DINNER_STATUSES;

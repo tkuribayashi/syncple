@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
+import { useDinnerStatusOptions, DinnerStatusMap } from '@/hooks/useDinnerStatusOptions';
+import { DinnerStatusType } from '@/types';
 
 type CalendarViewMode = '2weeks' | 'month';
 
@@ -11,6 +13,7 @@ export default function SettingsPage() {
   const { signOut, userProfile, updateDisplayName, fcm } = useAuth();
   const { quickMessages: loadedMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
   const { categories: loadedCategories, loading: loadingCategories, saveCategories } = useScheduleCategories(userProfile?.pairId || null);
+  const { statuses: loadedStatuses, loading: loadingStatuses, saveStatuses } = useDinnerStatusOptions(userProfile?.pairId || null);
   const [quickMessages, setQuickMessages] = useState<string[]>([]);
   const [categories, setCategories] = useState<ScheduleCategoryMap>({
     remote: '',
@@ -20,8 +23,15 @@ export default function SettingsPage() {
     outing: '',
     other: '',
   });
+  const [dinnerStatuses, setDinnerStatuses] = useState<DinnerStatusMap>({
+    alone: '',
+    cooking: '',
+    cooking_together: '',
+    undecided: '',
+  });
   const [editingMessage, setEditingMessage] = useState<{index: number, value: string} | null>(null);
   const [editingCategory, setEditingCategory] = useState<{key: ScheduleCategoryKey, value: string} | null>(null);
+  const [editingStatus, setEditingStatus] = useState<{key: DinnerStatusType, value: string} | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
@@ -38,6 +48,12 @@ export default function SettingsPage() {
       setCategories({ ...loadedCategories });
     }
   }, [loadedCategories, loadingCategories]);
+
+  useEffect(() => {
+    if (!loadingStatuses) {
+      setDinnerStatuses({ ...loadedStatuses });
+    }
+  }, [loadedStatuses, loadingStatuses]);
 
   // カレンダー表示モードをlocalStorageから読み込む
   useEffect(() => {
@@ -123,6 +139,24 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveStatus = async (key: DinnerStatusType, newValue: string) => {
+    if (!newValue.trim()) return;
+
+    const updated = { ...dinnerStatuses, [key]: newValue.trim() };
+    setDinnerStatuses(updated);
+    setEditingStatus(null);
+
+    setSaving(true);
+    try {
+      await saveStatuses(updated);
+    } catch (error) {
+      console.error('Error saving dinner status:', error);
+      alert('晩ご飯ステータスの保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim()) {
       alert('表示名を入力してください');
@@ -147,7 +181,7 @@ export default function SettingsPage() {
     setEditingDisplayName(true);
   };
 
-  if (loadingMessages || loadingCategories) {
+  if (loadingMessages || loadingCategories || loadingStatuses) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-600">読み込み中...</div>
@@ -272,6 +306,55 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setEditingCategory({key, value: categories[key]})}
+                    disabled={saving}
+                    className="btn btn-secondary px-4 disabled:opacity-50"
+                  >
+                    編集
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 晩ご飯ステータス設定 */}
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">晩ご飯ステータス</h2>
+        <div className="space-y-3">
+          {(Object.keys(dinnerStatuses) as DinnerStatusType[]).map((key) => (
+            <div key={key} className="flex gap-2">
+              {editingStatus?.key === key ? (
+                <>
+                  <input
+                    type="text"
+                    value={editingStatus.value}
+                    onChange={(e) => setEditingStatus({key, value: e.target.value})}
+                    className="input flex-1"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => handleSaveStatus(key, editingStatus.value)}
+                    disabled={saving}
+                    className="btn btn-primary px-4 disabled:opacity-50"
+                  >
+                    {saving ? '保存中...' : '保存'}
+                  </button>
+                  <button
+                    onClick={() => setEditingStatus(null)}
+                    disabled={saving}
+                    className="btn btn-secondary px-4 disabled:opacity-50"
+                  >
+                    キャンセル
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 bg-purple-50 p-3 rounded-lg">
+                    {dinnerStatuses[key]}
+                  </div>
+                  <button
+                    onClick={() => setEditingStatus({key, value: dinnerStatuses[key]})}
                     disabled={saving}
                     className="btn btn-secondary px-4 disabled:opacity-50"
                   >

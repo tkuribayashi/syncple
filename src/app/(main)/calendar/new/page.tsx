@@ -79,7 +79,7 @@ export default function NewSchedulePage() {
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="input"
+              className="input w-full"
               required
             />
           </div>
@@ -93,7 +93,7 @@ export default function NewSchedulePage() {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="input"
+              className="input w-full"
               placeholder="空欄の場合はカテゴリ名が使用されます"
             />
           </div>
@@ -106,7 +106,7 @@ export default function NewSchedulePage() {
               id="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as ScheduleCategoryKey })}
-              className="input"
+              className="input w-full"
               required
             >
               {Object.entries(categories).map(([key, label]) => (
@@ -141,29 +141,31 @@ export default function NewSchedulePage() {
 
           {!formData.isAllDay && (
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="min-w-0">
                 <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
                   開始時刻
                 </label>
                 <input
                   id="startTime"
                   type="time"
+                  step="900"
                   value={formData.startTime}
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="input"
+                  className="input w-full"
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
                   終了時刻
                 </label>
                 <input
                   id="endTime"
                   type="time"
+                  step="900"
                   value={formData.endTime}
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className="input"
+                  className="input w-full"
                 />
               </div>
             </div>
@@ -177,7 +179,7 @@ export default function NewSchedulePage() {
               id="memo"
               value={formData.memo}
               onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
-              className="input"
+              className="input w-full"
               rows={3}
               placeholder="詳細やメモを入力"
             />

@@ -135,7 +135,8 @@ export default function EditSchedulePage() {
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="input w-full"
+              className="input w-full max-w-full"
+              style={{ minWidth: 0 }}
               required
             />
           </div>
@@ -196,8 +197,8 @@ export default function EditSchedulePage() {
           </div>
 
           {!formData.isAllDay && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="min-w-0">
+            <div className="grid grid-cols-2 gap-4 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">
                 <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
                   開始時刻
                 </label>
@@ -207,11 +208,12 @@ export default function EditSchedulePage() {
                   step="900"
                   value={formData.startTime}
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="input w-full"
+                  className="input w-full max-w-full"
+                  style={{ minWidth: 0 }}
                 />
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 overflow-hidden">
                 <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
                   終了時刻
                 </label>
@@ -221,7 +223,8 @@ export default function EditSchedulePage() {
                   step="900"
                   value={formData.endTime}
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className="input w-full"
+                  className="input w-full max-w-full"
+                  style={{ minWidth: 0 }}
                 />
               </div>
             </div>

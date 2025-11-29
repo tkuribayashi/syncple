@@ -145,19 +145,27 @@ export default function HomePage() {
           <div className="space-y-3">
             {todaySchedules.map((schedule) => {
               const isMine = schedule.userId === user?.uid;
+              const isShared = schedule.isShared;
               return (
                 <div
                   key={schedule.id}
                   className={`p-4 rounded-xl ${
-                    isMine ? 'bg-pink-50' : 'bg-purple-50'
+                    isShared
+                      ? 'bg-gradient-to-r from-pink-50 to-purple-50'
+                      : isMine ? 'bg-pink-50' : 'bg-purple-50'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-3 h-3 rounded-full mt-1.5 ${
-                      isMine ? 'bg-pink-400' : 'bg-purple-400'
+                      isShared
+                        ? 'bg-gradient-to-r from-pink-400 to-purple-400'
+                        : isMine ? 'bg-pink-400' : 'bg-purple-400'
                     }`}></div>
                     <div className="flex-1">
-                      <p className="font-bold text-base">{schedule.title}</p>
+                      <p className="font-bold text-base">
+                        {schedule.title}
+                        {isShared && ' ⭐'}
+                      </p>
                       <p className="text-sm text-gray-600 mt-1">
                         {categories[schedule.category]}
                         {!schedule.isAllDay && schedule.startTime && (
@@ -168,7 +176,7 @@ export default function HomePage() {
                         )}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {isMine ? 'あなた' : partner?.displayName}
+                        {isShared ? '共通の予定' : isMine ? 'あなた' : partner?.displayName}
                       </p>
                     </div>
                   </div>

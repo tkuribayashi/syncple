@@ -26,6 +26,7 @@ export default function NewSchedulePage() {
     isAllDay: true,
     startTime: '09:00',
     endTime: '18:00',
+    isShared: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ export default function NewSchedulePage() {
         isAllDay: formData.isAllDay,
         startTime: formData.isAllDay ? null : formData.startTime,
         endTime: formData.isAllDay ? null : formData.endTime,
+        isShared: formData.isShared,
         repeat: {
           pattern: 'none',
         },
@@ -115,7 +117,7 @@ export default function NewSchedulePage() {
             </select>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -124,6 +126,16 @@ export default function NewSchedulePage() {
                 className="w-4 h-4"
               />
               <span className="text-sm font-medium text-gray-700">終日</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.isShared}
+                onChange={(e) => setFormData({ ...formData, isShared: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium text-gray-700">共通の予定（2人で編集可能）</span>
             </label>
           </div>
 

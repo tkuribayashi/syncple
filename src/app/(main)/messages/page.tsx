@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePair } from '@/hooks/usePair';
 import { useMessages } from '@/hooks/useMessages';
@@ -10,10 +10,26 @@ import { format } from 'date-fns';
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
   const { partner } = usePair();
-  const { messages, loading, sendMessage } = useMessages(userProfile?.pairId || null);
+  const { messages, loading, sendMessage, markAsRead } = useMessages(userProfile?.pairId || null);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const [messageInput, setMessageInput] = useState('');
   const [sending, setSending] = useState(false);
+
+  // パートナーから受信した未読メッセージを自動的に既読にする
+  useEffect(() => {
+    if (!user || messages.length === 0) return;
+
+    const unreadPartnerMessages = messages.filter(
+      msg => msg.senderId !== user.uid && !msg.isRead && msg.id
+    );
+
+    if (unreadPartnerMessages.length > 0) {
+      // 既読マーク処理（非同期・バックグラウンド）
+      Promise.all(
+        unreadPartnerMessages.map(msg => markAsRead(msg.id!))
+      ).catch(err => console.error('Failed to mark messages as read:', err));
+    }
+  }, [messages, user, markAsRead]);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -81,11 +97,16 @@ export default function MessagesPage() {
                     }`}
                   >
                     <p className="break-words">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
+                    <div className={`flex items-center gap-1.5 text-xs mt-1 ${
                       isMyMessage ? 'text-pink-100' : 'text-purple-600'
                     }`}>
-                      {message.createdAt && format(message.createdAt.toDate(), 'HH:mm')}
-                    </p>
+                      <span>
+                        {message.createdAt && format(message.createdAt.toDate(), 'HH:mm')}
+                      </span>
+                      {isMyMessage && message.isRead && (
+                        <span className="text-pink-100">✓</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

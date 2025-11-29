@@ -77,6 +77,7 @@ export function useMessages(pairId: string | null, messageLimit: number = 50) {
 
     await updateDoc(doc(db, 'pairs', pairId, 'messages', messageId), {
       isRead: true,
+      readAt: Timestamp.now(),
     });
   };
 

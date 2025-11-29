@@ -34,9 +34,28 @@ service cloud.firestore {
          resource.data.user2Id == request.auth.uid ||
          (resource.data.user2Id == null && request.resource.data.user2Id == request.auth.uid));
 
-      // サブコレクション: ペアのメンバーのみアクセス可能
+      // メッセージサブコレクション: 特別なルール
+      match /messages/{messageId} {
+        // ペアのメンバーは読み取りと作成が可能
+        allow read, create: if request.auth != null &&
+          (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
+           get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid);
+
+        // 更新は既読マークのみ許可（自分が送信したメッセージは更新不可）
+        allow update: if request.auth != null &&
+          (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
+           get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid) &&
+          resource.data.senderId != request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+
+        // 削除は送信者のみ可能
+        allow delete: if request.auth != null && resource.data.senderId == request.auth.uid;
+      }
+
+      // その他のサブコレクション: ペアのメンバーのみアクセス可能
       match /{subcollection}/{docId} {
         allow read, write: if request.auth != null &&
+          subcollection != 'messages' &&
           (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
            get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid);
       }

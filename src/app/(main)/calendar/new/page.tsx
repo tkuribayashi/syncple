@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useScheduleCategories, ScheduleCategoryKey } from '@/hooks/useScheduleCategories';
@@ -9,12 +9,17 @@ import { format } from 'date-fns';
 
 export default function NewSchedulePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { userProfile } = useAuth();
   const { addSchedule } = useSchedules(userProfile?.pairId || null);
   const { categories } = useScheduleCategories(userProfile?.pairId || null);
 
+  // クエリパラメータから日付を取得、なければ今日
+  const dateParam = searchParams.get('date');
+  const initialDate = dateParam || format(new Date(), 'yyyy-MM-dd');
+
   const [formData, setFormData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: initialDate,
     title: '',
     category: 'remote' as ScheduleCategoryKey,
     memo: '',

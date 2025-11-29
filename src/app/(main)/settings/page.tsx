@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
 
+type CalendarViewMode = '2weeks' | 'month';
+
 export default function SettingsPage() {
   const { signOut, userProfile, updateDisplayName, fcm } = useAuth();
   const { quickMessages: loadedMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
@@ -23,6 +25,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
+  const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('2weeks');
 
   useEffect(() => {
     if (!loadingMessages) {
@@ -35,6 +38,19 @@ export default function SettingsPage() {
       setCategories({ ...loadedCategories });
     }
   }, [loadedCategories, loadingCategories]);
+
+  // カレンダー表示モードをlocalStorageから読み込む
+  useEffect(() => {
+    const saved = localStorage.getItem('calendarViewMode');
+    if (saved && (saved === '2weeks' || saved === 'month')) {
+      setCalendarViewMode(saved as CalendarViewMode);
+    }
+  }, []);
+
+  const handleChangeCalendarViewMode = (mode: CalendarViewMode) => {
+    setCalendarViewMode(mode);
+    localStorage.setItem('calendarViewMode', mode);
+  };
 
   const handleSaveMessage = async (index: number, newValue: string) => {
     if (!newValue.trim()) {
@@ -265,6 +281,42 @@ export default function SettingsPage() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* カレンダー表示設定 */}
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">カレンダー表示</h2>
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              name="calendarViewMode"
+              value="2weeks"
+              checked={calendarViewMode === '2weeks'}
+              onChange={() => handleChangeCalendarViewMode('2weeks')}
+              className="w-4 h-4"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-gray-900">2週間表示</div>
+              <div className="text-xs text-gray-500">14日分を2列で表示（デフォルト）</div>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              name="calendarViewMode"
+              value="month"
+              checked={calendarViewMode === 'month'}
+              onChange={() => handleChangeCalendarViewMode('month')}
+              className="w-4 h-4"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-gray-900">1ヶ月表示</div>
+              <div className="text-xs text-gray-500">30日分をカレンダーグリッドで表示</div>
+            </div>
+          </label>
         </div>
       </div>
 

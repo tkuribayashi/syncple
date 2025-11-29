@@ -161,21 +161,27 @@ export default function CalendarPage() {
                     <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
+                        const isShared = schedule.isShared;
 
                         return (
                           <Link
                             key={schedule.id}
                             href={`/calendar/${schedule.id}`}
                             className={`block p-1.5 rounded border text-xs ${
-                              isOwnSchedule
+                              isShared
+                                ? 'bg-gradient-to-r from-pink-50 to-purple-50 border-pink-300 hover:from-pink-100 hover:to-purple-100'
+                                : isOwnSchedule
                                 ? 'bg-pink-50 border-pink-200 hover:bg-pink-100'
                                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
                             }`}
                           >
                             <div className={`font-semibold mb-0.5 ${
-                              isOwnSchedule ? 'text-pink-800' : 'text-purple-800'
+                              isShared
+                                ? 'text-pink-900'
+                                : isOwnSchedule ? 'text-pink-800' : 'text-purple-800'
                             }`}>
                               {schedule.title}
+                              {isShared && ' ⭐'}
                             </div>
                             {!schedule.isAllDay && schedule.startTime && (
                               <div className="text-xs text-gray-600">
@@ -240,20 +246,24 @@ export default function CalendarPage() {
                     <div className="space-y-0.5" onClick={(e) => e.stopPropagation()}>
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
+                        const isShared = schedule.isShared;
 
                         return (
                           <Link
                             key={schedule.id}
                             href={`/calendar/${schedule.id}`}
                             className={`block text-xs px-1 py-0.5 rounded truncate ${
-                              isOwnSchedule
+                              isShared
+                                ? 'bg-gradient-to-r from-pink-200 to-purple-200 text-pink-900 hover:from-pink-300 hover:to-purple-300'
+                                : isOwnSchedule
                                 ? 'bg-pink-200 text-pink-900 hover:bg-pink-300'
                                 : 'bg-purple-200 text-purple-900 hover:bg-purple-300'
                             }`}
-                            title={`${schedule.title}${schedule.startTime ? ` ${schedule.startTime}` : ''}`}
+                            title={`${schedule.title}${schedule.startTime ? ` ${schedule.startTime}` : ''}${isShared ? ' (共通)' : ''}`}
                           >
                             {schedule.startTime && <span className="font-semibold">{schedule.startTime.substring(0, 5)} </span>}
                             {schedule.title}
+                            {isShared && ' ⭐'}
                           </Link>
                         );
                       })}

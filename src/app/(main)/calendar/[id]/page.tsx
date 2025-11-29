@@ -83,6 +83,8 @@ export default function ScheduleDetailPage() {
   }
 
   const isMySchedule = schedule.userId === user?.uid;
+  const isShared = schedule.isShared;
+  const canEdit = isShared || isMySchedule; // 共通の予定は両方が編集可能
   const ownerName = isMySchedule ? 'あなた' : partner?.displayName || 'パートナー';
 
   return (
@@ -96,8 +98,13 @@ export default function ScheduleDetailPage() {
       <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
         {/* タイトル */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{schedule.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">{ownerName}の予定</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {schedule.title}
+            {isShared && ' ⭐'}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {isShared ? '共通の予定（2人で編集可能）' : `${ownerName}の予定`}
+          </p>
         </div>
 
         {/* 日付と時間 */}
@@ -177,7 +184,7 @@ export default function ScheduleDetailPage() {
 
         {/* アクションボタン */}
         <div className="space-y-3 pt-4">
-          {isMySchedule && (
+          {canEdit && (
             <>
               <Link
                 href={`/calendar/${scheduleId}/edit`}

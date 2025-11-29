@@ -29,6 +29,7 @@ export interface Schedule {
   isAllDay: boolean;
   startTime: string | null; // "HH:mm"
   endTime: string | null; // "HH:mm"
+  isShared: boolean; // 共通の予定かどうか
   repeat: {
     pattern: 'none' | 'daily' | 'weekly' | 'monthly';
     dayOfWeek?: number; // 0(日)〜6(土)

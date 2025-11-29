@@ -23,6 +23,7 @@ export default function EditSchedulePage() {
     isAllDay: true,
     startTime: '09:00',
     endTime: '18:00',
+    isShared: false,
   });
 
   const [loading, setLoading] = useState(true);
@@ -44,8 +45,8 @@ export default function EditSchedulePage() {
         if (scheduleDoc.exists()) {
           const schedule = scheduleDoc.data() as Schedule;
 
-          // 自分の予定でない場合はリダイレクト
-          if (schedule.userId !== user?.uid) {
+          // 共通の予定でない場合、自分の予定でなければリダイレクト
+          if (!schedule.isShared && schedule.userId !== user?.uid) {
             alert('この予定は編集できません');
             router.push(`/calendar/${scheduleId}`);
             return;
@@ -59,6 +60,7 @@ export default function EditSchedulePage() {
             isAllDay: schedule.isAllDay,
             startTime: schedule.startTime || '09:00',
             endTime: schedule.endTime || '18:00',
+            isShared: schedule.isShared || false,
           });
         } else {
           alert('予定が見つかりません');
@@ -97,6 +99,7 @@ export default function EditSchedulePage() {
         isAllDay: formData.isAllDay,
         startTime: formData.isAllDay ? null : formData.startTime,
         endTime: formData.isAllDay ? null : formData.endTime,
+        isShared: formData.isShared,
         updatedAt: Timestamp.now(),
       });
 
@@ -170,7 +173,7 @@ export default function EditSchedulePage() {
             </select>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -179,6 +182,16 @@ export default function EditSchedulePage() {
                 className="w-4 h-4"
               />
               <span className="text-sm font-medium text-gray-700">終日</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.isShared}
+                onChange={(e) => setFormData({ ...formData, isShared: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium text-gray-700">共通の予定（2人で編集可能）</span>
             </label>
           </div>
 

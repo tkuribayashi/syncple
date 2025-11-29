@@ -78,7 +78,20 @@ export default function CalendarPage() {
 
   const getSchedulesForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return schedules.filter(s => s.date === dateStr);
+    return schedules
+      .filter(s => s.date === dateStr)
+      .sort((a, b) => {
+        // 終日の予定を先に表示
+        if (a.isAllDay && !b.isAllDay) return -1;
+        if (!a.isAllDay && b.isAllDay) return 1;
+
+        // 両方時刻指定の場合、開始時刻順
+        if (!a.isAllDay && !b.isAllDay) {
+          return (a.startTime || '').localeCompare(b.startTime || '');
+        }
+
+        return 0;
+      });
   };
 
   return (
@@ -169,7 +182,7 @@ export default function CalendarPage() {
                             href={`/calendar/${schedule.id}`}
                             className={`block p-1.5 rounded border text-xs ${
                               isShared
-                                ? 'bg-gradient-to-r from-pink-50 to-purple-50 border-pink-300 hover:from-pink-100 hover:to-purple-100'
+                                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300 hover:from-blue-100 hover:to-cyan-100'
                                 : isOwnSchedule
                                 ? 'bg-pink-50 border-pink-200 hover:bg-pink-100'
                                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
@@ -177,7 +190,7 @@ export default function CalendarPage() {
                           >
                             <div className={`font-semibold mb-0.5 ${
                               isShared
-                                ? 'text-pink-900'
+                                ? 'text-blue-900'
                                 : isOwnSchedule ? 'text-pink-800' : 'text-purple-800'
                             }`}>
                               {schedule.title}
@@ -254,7 +267,7 @@ export default function CalendarPage() {
                             href={`/calendar/${schedule.id}`}
                             className={`block text-xs px-1 py-0.5 rounded truncate ${
                               isShared
-                                ? 'bg-gradient-to-r from-pink-200 to-purple-200 text-pink-900 hover:from-pink-300 hover:to-purple-300'
+                                ? 'bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-900 hover:from-blue-300 hover:to-cyan-300'
                                 : isOwnSchedule
                                 ? 'bg-pink-200 text-pink-900 hover:bg-pink-300'
                                 : 'bg-purple-200 text-purple-900 hover:bg-purple-300'

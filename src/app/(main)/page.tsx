@@ -55,7 +55,20 @@ export default function HomePage() {
   }
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todaySchedules = schedules.filter(s => s.date === today);
+  const todaySchedules = schedules
+    .filter(s => s.date === today)
+    .sort((a, b) => {
+      // 終日の予定を先に表示
+      if (a.isAllDay && !b.isAllDay) return -1;
+      if (!a.isAllDay && b.isAllDay) return 1;
+
+      // 両方時刻指定の場合、開始時刻順
+      if (!a.isAllDay && !b.isAllDay) {
+        return (a.startTime || '').localeCompare(b.startTime || '');
+      }
+
+      return 0;
+    });
 
   const handleQuickMessage = async (template: string) => {
     if (template.includes('{分}')) {
@@ -172,14 +185,14 @@ export default function HomePage() {
                   key={schedule.id}
                   className={`p-4 rounded-xl ${
                     isShared
-                      ? 'bg-gradient-to-r from-pink-50 to-purple-50'
+                      ? 'bg-gradient-to-r from-blue-50 to-cyan-50'
                       : isMine ? 'bg-pink-50' : 'bg-purple-50'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-3 h-3 rounded-full mt-1.5 ${
                       isShared
-                        ? 'bg-gradient-to-r from-pink-400 to-purple-400'
+                        ? 'bg-gradient-to-r from-blue-400 to-cyan-400'
                         : isMine ? 'bg-pink-400' : 'bg-purple-400'
                     }`}></div>
                     <div className="flex-1">

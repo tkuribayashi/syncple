@@ -90,7 +90,7 @@ export default function ScheduleDetailPage() {
   return (
     <div className="max-w-2xl mx-auto p-4 pb-24">
       <div className="mb-4">
-        <Link href="/calendar" className="text-blue-600 hover:text-blue-700">
+        <Link href="/calendar" className="inline-block btn btn-secondary">
           ← カレンダーに戻る
         </Link>
       </div>

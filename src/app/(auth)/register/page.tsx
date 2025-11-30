@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
+// 開発環境またはSTG環境でメール/パスワード認証を表示
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isNonProduction = process.env.NEXT_PUBLIC_ENV === 'local' || process.env.NEXT_PUBLIC_ENV === 'staging' || isDevelopment;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,7 +21,7 @@ export default function RegisterPage() {
 
   // 本番環境ではログインページにリダイレクト
   useEffect(() => {
-    if (!isDevelopment) {
+    if (!isNonProduction) {
       router.replace('/login');
     }
   }, [router]);

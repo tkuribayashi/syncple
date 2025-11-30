@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useScheduleCategories, ScheduleCategoryKey } from '@/hooks/useScheduleCategories';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function NewSchedulePage() {
   const router = useRouter();
@@ -71,16 +74,19 @@ export default function NewSchedulePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               日付 *
             </label>
-            <input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            <DatePicker
+              selected={parse(formData.date, 'yyyy-MM-dd', new Date())}
+              onChange={(date) => {
+                if (date) {
+                  setFormData({ ...formData, date: format(date, 'yyyy-MM-dd') });
+                }
+              }}
+              dateFormat="yyyy/MM/dd"
+              locale={ja}
               className="input w-full"
-              style={{ minWidth: 0, maxWidth: '100%' }}
               required
             />
           </div>
@@ -141,34 +147,46 @@ export default function NewSchedulePage() {
           </div>
 
           {!formData.isAllDay && (
-            <div className="flex gap-4">
-              <div className="flex-1 min-w-0">
-                <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   開始時刻
                 </label>
-                <input
-                  id="startTime"
-                  type="time"
-                  step="900"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                <DatePicker
+                  selected={parse(formData.startTime, 'HH:mm', new Date())}
+                  onChange={(date) => {
+                    if (date) {
+                      setFormData({ ...formData, startTime: format(date, 'HH:mm') });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  timeCaption="時刻"
+                  dateFormat="HH:mm"
+                  locale={ja}
                   className="input w-full"
-                  style={{ minWidth: 0, maxWidth: '100%' }}
                 />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   終了時刻
                 </label>
-                <input
-                  id="endTime"
-                  type="time"
-                  step="900"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                <DatePicker
+                  selected={parse(formData.endTime, 'HH:mm', new Date())}
+                  onChange={(date) => {
+                    if (date) {
+                      setFormData({ ...formData, endTime: format(date, 'HH:mm') });
+                    }
+                  }}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  timeCaption="時刻"
+                  dateFormat="HH:mm"
+                  locale={ja}
                   className="input w-full"
-                  style={{ minWidth: 0, maxWidth: '100%' }}
                 />
               </div>
             </div>

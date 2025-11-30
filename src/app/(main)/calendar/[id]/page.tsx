@@ -136,7 +136,7 @@ export default function ScheduleDetailPage() {
                 <p className="text-sm text-gray-600">時間</p>
                 <p className="text-lg font-semibold">
                   {schedule.startTime}
-                  {schedule.endTime && ` - ${schedule.endTime}`}
+                  {schedule.endTime && schedule.endTime !== schedule.startTime && ` - ${schedule.endTime}`}
                 </p>
               </div>
             </div>

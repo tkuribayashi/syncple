@@ -235,7 +235,7 @@ export default function EditSchedulePage() {
                   終了時刻
                 </label>
                 <DatePicker
-                  selected={parse(formData.endTime, 'HH:mm', new Date())}
+                  selected={formData.endTime ? parse(formData.endTime, 'HH:mm', new Date()) : null}
                   onChange={(date) => {
                     if (date) {
                       setFormData({ ...formData, endTime: format(date, 'HH:mm') });
@@ -250,6 +250,7 @@ export default function EditSchedulePage() {
                   dateFormat="HH:mm"
                   locale={ja}
                   className="input w-full"
+                  placeholderText="選択してください"
                 />
               </div>
             </div>

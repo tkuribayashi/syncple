@@ -199,7 +199,7 @@ export default function CalendarPage() {
                             {!schedule.isAllDay && schedule.startTime && (
                               <div className="text-xs text-gray-600">
                                 {schedule.startTime}
-                                {schedule.endTime && ` - ${schedule.endTime}`}
+                                {schedule.endTime && schedule.endTime !== schedule.startTime && ` - ${schedule.endTime}`}
                               </div>
                             )}
                           </Link>

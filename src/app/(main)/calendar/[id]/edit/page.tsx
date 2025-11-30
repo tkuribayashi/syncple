@@ -141,6 +141,8 @@ export default function EditSchedulePage() {
                   setFormData({ ...formData, date: format(date, 'yyyy-MM-dd') });
                 }
               }}
+              onChangeRaw={(e) => e?.preventDefault()}
+              onFocus={(e) => (e.target as HTMLInputElement).blur()}
               dateFormat="yyyy/MM/dd"
               locale={ja}
               className="input w-full"
@@ -216,6 +218,8 @@ export default function EditSchedulePage() {
                       setFormData({ ...formData, startTime: format(date, 'HH:mm') });
                     }
                   }}
+                  onChangeRaw={(e) => e?.preventDefault()}
+                  onFocus={(e) => (e.target as HTMLInputElement).blur()}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={15}
@@ -237,6 +241,8 @@ export default function EditSchedulePage() {
                       setFormData({ ...formData, endTime: format(date, 'HH:mm') });
                     }
                   }}
+                  onChangeRaw={(e) => e?.preventDefault()}
+                  onFocus={(e) => (e.target as HTMLInputElement).blur()}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={15}

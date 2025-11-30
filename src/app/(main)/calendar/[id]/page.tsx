@@ -90,7 +90,7 @@ export default function ScheduleDetailPage() {
   return (
     <div className="max-w-2xl mx-auto p-4 pb-24">
       <div className="mb-4">
-        <Link href="/calendar" className="text-blue-600 hover:text-blue-700">
+        <Link href="/calendar" className="inline-block btn btn-secondary">
           ← カレンダーに戻る
         </Link>
       </div>
@@ -136,7 +136,7 @@ export default function ScheduleDetailPage() {
                 <p className="text-sm text-gray-600">時間</p>
                 <p className="text-lg font-semibold">
                   {schedule.startTime}
-                  {schedule.endTime && ` - ${schedule.endTime}`}
+                  {schedule.endTime && schedule.endTime !== schedule.startTime && ` - ${schedule.endTime}`}
                 </p>
               </div>
             </div>

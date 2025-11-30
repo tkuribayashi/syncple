@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
+// 開発環境またはSTG環境でメール/パスワード認証を表示
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isNonProduction = process.env.NEXT_PUBLIC_ENV === 'local' || process.env.NEXT_PUBLIC_ENV === 'staging' || isDevelopment;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,8 +57,10 @@ export default function LoginPage() {
               Syncple
             </h1>
             <p className="text-gray-600">夫婦連絡アプリ</p>
-            {isDevelopment && (
-              <p className="text-xs text-orange-600 mt-2">開発モード</p>
+            {isNonProduction && (
+              <p className="text-xs text-orange-600 mt-2">
+                {process.env.NEXT_PUBLIC_ENV === 'staging' ? 'STG環境' : '開発モード'}
+              </p>
             )}
           </div>
 
@@ -94,8 +98,8 @@ export default function LoginPage() {
               <span>{loading ? 'ログイン中...' : 'Googleでログイン'}</span>
             </button>
 
-            {/* 開発環境のみ: メール/パスワード認証 */}
-            {isDevelopment && (
+            {/* 開発環境・STG環境: メール/パスワード認証 */}
+            {isNonProduction && (
               <>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -153,7 +157,7 @@ export default function LoginPage() {
               </>
             )}
 
-            {!isDevelopment && (
+            {!isNonProduction && (
               <div className="mt-8 text-center text-sm text-gray-500">
                 <p>Googleアカウントでログインすると、</p>
                 <p>自動的にアカウントが作成されます</p>

@@ -205,7 +205,7 @@ export default function HomePage() {
                         {!schedule.isAllDay && schedule.startTime && (
                           <>
                             {` • ${schedule.startTime}`}
-                            {schedule.endTime && ` - ${schedule.endTime}`}
+                            {schedule.endTime && schedule.endTime !== schedule.startTime && ` - ${schedule.endTime}`}
                           </>
                         )}
                       </p>

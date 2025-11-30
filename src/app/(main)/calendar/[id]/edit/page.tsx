@@ -141,6 +141,8 @@ export default function EditSchedulePage() {
                   setFormData({ ...formData, date: format(date, 'yyyy-MM-dd') });
                 }
               }}
+              onChangeRaw={(e) => e?.preventDefault()}
+              onFocus={(e) => (e.target as HTMLInputElement).blur()}
               dateFormat="yyyy/MM/dd"
               locale={ja}
               className="input w-full"
@@ -216,6 +218,8 @@ export default function EditSchedulePage() {
                       setFormData({ ...formData, startTime: format(date, 'HH:mm') });
                     }
                   }}
+                  onChangeRaw={(e) => e?.preventDefault()}
+                  onFocus={(e) => (e.target as HTMLInputElement).blur()}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={15}
@@ -231,12 +235,14 @@ export default function EditSchedulePage() {
                   終了時刻
                 </label>
                 <DatePicker
-                  selected={parse(formData.endTime, 'HH:mm', new Date())}
+                  selected={formData.endTime ? parse(formData.endTime, 'HH:mm', new Date()) : null}
                   onChange={(date) => {
                     if (date) {
                       setFormData({ ...formData, endTime: format(date, 'HH:mm') });
                     }
                   }}
+                  onChangeRaw={(e) => e?.preventDefault()}
+                  onFocus={(e) => (e.target as HTMLInputElement).blur()}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={15}
@@ -244,6 +250,7 @@ export default function EditSchedulePage() {
                   dateFormat="HH:mm"
                   locale={ja}
                   className="input w-full"
+                  placeholderText="選択してください"
                 />
               </div>
             </div>

@@ -47,6 +47,9 @@ export interface Message {
   isRead: boolean;
   readAt?: Timestamp;
   createdAt: Timestamp;
+  reactions?: {
+    [userId: string]: string; // userId: reactionType (例: "like")
+  };
 }
 
 export interface QuickMessage {

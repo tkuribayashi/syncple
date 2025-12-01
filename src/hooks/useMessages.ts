@@ -81,10 +81,36 @@ export function useMessages(pairId: string | null, messageLimit: number = 50) {
     });
   };
 
+  const toggleReaction = async (messageId: string, reactionType: string = 'like') => {
+    if (!pairId || !user) throw new Error('Pair ID or user not found');
+
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const messageRef = doc(db, 'pairs', pairId, 'messages', messageId);
+    const currentReactions = message.reactions || {};
+    const hasMyReaction = currentReactions[user.uid] === reactionType;
+
+    if (hasMyReaction) {
+      // リアクションを削除
+      const { [user.uid]: _, ...rest } = currentReactions;
+      await updateDoc(messageRef, { reactions: rest });
+    } else {
+      // リアクションを追加
+      await updateDoc(messageRef, {
+        reactions: {
+          ...currentReactions,
+          [user.uid]: reactionType
+        }
+      });
+    }
+  };
+
   return {
     messages,
     loading,
     sendMessage,
     markAsRead,
+    toggleReaction,
   };
 }

@@ -10,10 +10,12 @@ import { format } from 'date-fns';
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
   const { partner } = usePair();
-  const { messages, loading, sendMessage, markAsRead } = useMessages(userProfile?.pairId || null);
+  const { messages, loading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const [messageInput, setMessageInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [lastTap, setLastTap] = useState<{ messageId: string; time: number } | null>(null);
+  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
 
   // パートナーから受信した未読メッセージを自動的に既読にする
   useEffect(() => {
@@ -58,6 +60,22 @@ export default function MessagesPage() {
     }
   };
 
+  const handleMessageTap = (messageId: string) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
+
+    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < DOUBLE_TAP_DELAY) {
+      // ダブルタップ検出
+      setAnimatingMessageId(messageId);
+      setTimeout(() => setAnimatingMessageId(null), 600);
+      toggleReaction(messageId);
+      setLastTap(null);
+    } else {
+      // 1回目のタップ
+      setLastTap({ messageId, time: now });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSendMessage(messageInput);
@@ -84,17 +102,24 @@ export default function MessagesPage() {
           ) : (
             [...messages].reverse().map((message) => {
               const isMyMessage = message.senderId === user?.uid;
+              const hasReaction = message.reactions && Object.keys(message.reactions).length > 0;
+              const myReaction = message.reactions && user?.uid ? message.reactions[user.uid] : null;
+
               return (
                 <div
                   key={message.id}
                   className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    onClick={() => !isMyMessage && message.id && handleMessageTap(message.id)}
+                    className={`max-w-[70%] rounded-lg p-3 transition-transform duration-200 ${
                       isMyMessage
                         ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white'
-                        : 'bg-purple-100 text-gray-900'
+                        : 'bg-purple-100 text-gray-900 cursor-pointer active:scale-95'
+                    } ${
+                      animatingMessageId === message.id ? 'scale-110' : ''
                     }`}
+                    style={{ touchAction: 'manipulation' }}
                   >
                     <p className="break-words">{message.content}</p>
                     <div className={`flex items-center gap-1.5 text-xs mt-1 ${
@@ -107,6 +132,13 @@ export default function MessagesPage() {
                         <span className="text-pink-100">✓</span>
                       )}
                     </div>
+
+                    {/* リアクション表示（相手のメッセージのみ） */}
+                    {!isMyMessage && hasReaction && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-base">{myReaction === 'like' ? '❤️' : '🤍'}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

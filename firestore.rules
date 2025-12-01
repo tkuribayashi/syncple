@@ -41,12 +41,19 @@ service cloud.firestore {
           (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
            get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid);
 
-        // 更新は既読マークのみ許可（自分が送信したメッセージは更新不可）
+        // 更新は以下の場合に許可:
+        // 1. 既読マーク（自分が送信していないメッセージのみ）
+        // 2. リアクション（reactionsフィールドのみ）
         allow update: if request.auth != null &&
           (get(/databases/$(database)/documents/pairs/$(pairId)).data.user1Id == request.auth.uid ||
            get(/databases/$(database)/documents/pairs/$(pairId)).data.user2Id == request.auth.uid) &&
-          resource.data.senderId != request.auth.uid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt']);
+          (
+            // 既読マークの更新（自分が送信していないメッセージのみ）
+            (resource.data.senderId != request.auth.uid &&
+             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt'])) ||
+            // リアクションの更新（reactionsフィールドのみ）
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+          );
 
         // 削除は送信者のみ可能
         allow delete: if request.auth != null && resource.data.senderId == request.auth.uid;

@@ -106,11 +106,27 @@ export function useMessages(pairId: string | null, messageLimit: number = 50) {
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    if (!pairId || !user) throw new Error('Pair ID or user not found');
+
+    const message = messages.find(m => m.id === messageId);
+    if (!message) throw new Error('Message not found');
+
+    // 自分が送信したメッセージのみ削除可能
+    if (message.senderId !== user.uid) {
+      throw new Error('You can only delete your own messages');
+    }
+
+    const messageRef = doc(db, 'pairs', pairId, 'messages', messageId);
+    await deleteDoc(messageRef);
+  };
+
   return {
     messages,
     loading,
     sendMessage,
     markAsRead,
     toggleReaction,
+    deleteMessage,
   };
 }

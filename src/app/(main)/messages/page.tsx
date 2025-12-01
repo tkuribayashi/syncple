@@ -12,7 +12,7 @@ import NumberInputModal from '@/components/NumberInputModal';
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
   const { partner } = usePair();
-  const { messages, loading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null);
+  const { messages, loading, sendMessage, markAsRead, toggleReaction, deleteMessage } = useMessages(userProfile?.pairId || null);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const [messageInput, setMessageInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -27,6 +27,9 @@ export default function MessagesPage() {
     template: '',
     variable: null,
   });
+  const [deleteMenuMessageId, setDeleteMenuMessageId] = useState<string | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   // パートナーから受信した未読メッセージを自動的に既読にする
   useEffect(() => {
@@ -87,6 +90,73 @@ export default function MessagesPage() {
     setModalState({ isOpen: false, template: '', variable: null });
   };
 
+  const handlePointerStart = (e: React.TouchEvent | React.MouseEvent, messageId: string) => {
+    let clientX: number, clientY: number;
+
+    if ('touches' in e) {
+      const touch = e.touches[0];
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    setTouchStart({ x: clientX, y: clientY });
+
+    const timer = setTimeout(() => {
+      setDeleteMenuMessageId(messageId);
+    }, 500);
+
+    setLongPressTimer(timer);
+  };
+
+  const handlePointerMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!touchStart || !longPressTimer) return;
+
+    let clientX: number, clientY: number;
+
+    if ('touches' in e) {
+      // タッチイベント
+      const touch = e.touches[0];
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else {
+      // マウスイベント
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const dx = clientX - touchStart.x;
+    const dy = clientY - touchStart.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 10px以上移動したらキャンセル（スクロールと判定）
+    if (distance > 10) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      setTouchStart(null);
+    }
+  };
+
+  const handlePointerEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setTouchStart(null);
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await deleteMessage(messageId);
+      setDeleteMenuMessageId(null);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('メッセージの削除に失敗しました');
+    }
+  };
+
   const handleMessageTap = (messageId: string) => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
@@ -132,16 +202,35 @@ export default function MessagesPage() {
               const hasReaction = message.reactions && Object.keys(message.reactions).length > 0;
               const myReaction = message.reactions && user?.uid ? message.reactions[user.uid] : null;
 
+              const handleMyMessageMouseDown = (e: React.MouseEvent) => {
+                if (isMyMessage && message.id) {
+                  handlePointerStart(e, message.id);
+                }
+              };
+
+              const handleMyMessageTouchStart = (e: React.TouchEvent) => {
+                if (isMyMessage && message.id) {
+                  handlePointerStart(e, message.id);
+                }
+              };
+
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} relative`}
                 >
                   <div
                     onClick={() => !isMyMessage && message.id && handleMessageTap(message.id)}
+                    onTouchStart={handleMyMessageTouchStart}
+                    onTouchMove={handlePointerMove}
+                    onTouchEnd={handlePointerEnd}
+                    onMouseDown={handleMyMessageMouseDown}
+                    onMouseMove={handlePointerMove}
+                    onMouseUp={handlePointerEnd}
+                    onMouseLeave={handlePointerEnd}
                     className={`max-w-[70%] rounded-lg p-3 transition-transform duration-200 ${
                       isMyMessage
-                        ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white'
+                        ? 'bg-gradient-to-r from-pink-400 to-pink-500 text-white select-none'
                         : 'bg-purple-100 text-gray-900 cursor-pointer active:scale-95'
                     } ${
                       animatingMessageId === message.id ? 'scale-110' : ''
@@ -167,6 +256,26 @@ export default function MessagesPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* 削除メニュー */}
+                  {deleteMenuMessageId === message.id && isMyMessage && (
+                    <>
+                      {/* 背景オーバーレイ */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setDeleteMenuMessageId(null)}
+                      />
+                      {/* 削除ボタン */}
+                      <div className="absolute bottom-0 right-0 mb-[-44px] mr-2 z-50 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                        <button
+                          onClick={() => message.id && handleDeleteMessage(message.id)}
+                          className="px-4 py-2 text-red-600 hover:bg-red-50 font-medium text-sm whitespace-nowrap"
+                        >
+                          削除
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })

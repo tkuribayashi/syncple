@@ -1,20 +1,20 @@
 export interface Variable {
-  placeholder: string;  // "{数}" または "{数=30}"
+  placeholder: string;  // "{n}" または "{n=30}"
   defaultValue: string; // デフォルト値（あれば）
 }
 
 /**
- * テンプレート文字列から {数} 変数を抽出する
+ * テンプレート文字列から {n} 変数を抽出する
  * @param template テンプレート文字列
  * @returns Variable | null
  */
 export function extractVariable(template: string): Variable | null {
-  const match = template.match(/\{数(?:=(\d+))?\}/);
+  const match = template.match(/\{n(?:=(\d+))?\}/);
 
   if (!match) return null;
 
   return {
-    placeholder: match[0],      // "{数}" または "{数=30}"
+    placeholder: match[0],      // "{n}" または "{n=30}"
     defaultValue: match[1] || '' // デフォルト値（あれば）
   };
 }

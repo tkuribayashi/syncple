@@ -285,18 +285,18 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => {
                           const variable = defaultValueInput
-                            ? `{数=${defaultValueInput}}`
-                            : '{数}';
+                            ? `{n=${defaultValueInput}}`
+                            : '{n}';
                           insertVariable(variable);
                         }}
                         className="px-3 py-1.5 text-sm bg-white border border-purple-200 rounded-lg hover:bg-purple-100"
                       >
-                        {'{数}'}を挿入
+                        {'{n}'}を挿入
                       </button>
                     </div>
 
                     <p className="text-xs text-gray-500">
-                      例: 「{'{数}'}分後に帰る」「あと{'{数=30}'}分で着く」
+                      例: 「{'{n}'}分後に帰る」「あと{'{n=30}'}分で着く」
                     </p>
                   </div>
 

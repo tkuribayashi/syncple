@@ -6,6 +6,8 @@ import { usePair } from '@/hooks/usePair';
 import { useMessages } from '@/hooks/useMessages';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { format } from 'date-fns';
+import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
+import NumberInputModal from '@/components/NumberInputModal';
 
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
@@ -16,6 +18,15 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [lastTap, setLastTap] = useState<{ messageId: string; time: number } | null>(null);
   const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    template: string;
+    variable: Variable | null;
+  }>({
+    isOpen: false,
+    template: '',
+    variable: null,
+  });
 
   // パートナーから受信した未読メッセージを自動的に既読にする
   useEffect(() => {
@@ -49,15 +60,31 @@ export default function MessagesPage() {
   };
 
   const handleQuickMessage = (template: string) => {
-    if (template.includes('{分}')) {
-      const minutes = prompt('何分後ですか？');
-      if (minutes) {
-        const message = template.replace('{分}', minutes);
-        handleSendMessage(message);
-      }
+    const variable = extractVariable(template);
+
+    if (variable) {
+      // 変数がある場合はモーダルを表示
+      setModalState({ isOpen: true, template, variable });
     } else {
+      // 変数がない場合はそのまま送信
       handleSendMessage(template);
     }
+  };
+
+  const handleModalConfirm = (value: string) => {
+    if (modalState.variable) {
+      const message = replaceVariable(
+        modalState.template,
+        modalState.variable,
+        value
+      );
+      handleSendMessage(message);
+    }
+    setModalState({ isOpen: false, template: '', variable: null });
+  };
+
+  const handleModalCancel = () => {
+    setModalState({ isOpen: false, template: '', variable: null });
   };
 
   const handleMessageTap = (messageId: string) => {
@@ -186,6 +213,13 @@ export default function MessagesPage() {
           </form>
         </div>
       </div>
+
+      <NumberInputModal
+        isOpen={modalState.isOpen}
+        defaultValue={modalState.variable?.defaultValue || ''}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
     </div>
   );
 }

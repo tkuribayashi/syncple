@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
@@ -29,13 +29,15 @@ export default function SettingsPage() {
     cooking_together: '',
     undecided: '',
   });
-  const [editingMessage, setEditingMessage] = useState<{index: number, value: string} | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{index: number, value: string, cursorPosition: number} | null>(null);
   const [editingCategory, setEditingCategory] = useState<{key: ScheduleCategoryKey, value: string} | null>(null);
   const [editingStatus, setEditingStatus] = useState<{key: DinnerStatusType, value: string} | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('2weeks');
+  const [defaultValueInput, setDefaultValueInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loadingMessages) {
@@ -87,10 +89,38 @@ export default function SettingsPage() {
       console.error('Error saving message:', error);
       alert('メッセージの保存に失敗しました');
       // 保存失敗時は編集モードに戻す
-      setEditingMessage({ index, value: newValue });
+      setEditingMessage({ index, value: newValue, cursorPosition: newValue.length });
     } finally {
       setSaving(false);
     }
+  };
+
+  // カーソル位置に変数を挿入
+  const insertVariable = (variable: string) => {
+    if (!editingMessage) return;
+
+    const { value, cursorPosition } = editingMessage;
+    const before = value.substring(0, cursorPosition);
+    const after = value.substring(cursorPosition);
+    const newValue = before + variable + after;
+    const newCursorPosition = cursorPosition + variable.length;
+
+    setEditingMessage({
+      ...editingMessage,
+      value: newValue,
+      cursorPosition: newCursorPosition,
+    });
+
+    // デフォルト値入力をクリア
+    setDefaultValueInput('');
+
+    // フォーカスを戻してカーソル位置を設定
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+      }
+    }, 0);
   };
 
   const handleAddMessage = () => {
@@ -99,7 +129,7 @@ export default function SettingsPage() {
     // 空のメッセージを追加して、即座に編集モードに入る
     const newIndex = quickMessages.length;
     setQuickMessages([...quickMessages, '']);
-    setEditingMessage({ index: newIndex, value: '' });
+    setEditingMessage({ index: newIndex, value: '', cursorPosition: 0 });
   };
 
   const handleDeleteMessage = async (index: number) => {
@@ -208,44 +238,100 @@ export default function SettingsPage() {
 
         <div className="space-y-3">
           {quickMessages.map((message, index) => (
-            <div key={index} className="flex gap-2">
+            <div key={index}>
               {editingMessage?.index === index ? (
-                <>
+                <div className="space-y-2">
+                  {/* メッセージ入力 */}
                   <input
+                    ref={inputRef}
                     type="text"
                     value={editingMessage.value}
-                    onChange={(e) => setEditingMessage({index, value: e.target.value})}
-                    className="input flex-1"
+                    onChange={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      setEditingMessage({
+                        index,
+                        value: e.target.value,
+                        cursorPosition: target.selectionStart || 0,
+                      });
+                    }}
+                    onSelect={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      setEditingMessage({
+                        ...editingMessage,
+                        cursorPosition: target.selectionStart || 0,
+                      });
+                    }}
+                    className="input w-full"
                     autoFocus
                   />
-                  <button
-                    onClick={() => handleSaveMessage(index, editingMessage.value)}
-                    disabled={saving}
-                    className="btn btn-primary px-4 disabled:opacity-50"
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      // 空のメッセージ（新規追加中）の場合は削除
-                      if (quickMessages[index] === '' && editingMessage.value === '') {
-                        setQuickMessages(quickMessages.filter((_, i) => i !== index));
-                      }
-                      setEditingMessage(null);
-                    }}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    キャンセル
-                  </button>
-                </>
+
+                  {/* 変数挿入UI */}
+                  <div className="bg-purple-50 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-semibold text-gray-700">
+                      数値変数を挿入:
+                    </p>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="初期値"
+                        value={defaultValueInput}
+                        onChange={(e) => setDefaultValueInput(e.target.value)}
+                        className="input w-20 text-sm px-2"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const variable = defaultValueInput
+                            ? `{数=${defaultValueInput}}`
+                            : '{数}';
+                          insertVariable(variable);
+                        }}
+                        className="px-3 py-1.5 text-sm bg-white border border-purple-200 rounded-lg hover:bg-purple-100"
+                      >
+                        {'{数}'}を挿入
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      例: 「{'{数}'}分後に帰る」「あと{'{数=30}'}分で着く」
+                    </p>
+                  </div>
+
+                  {/* 保存/キャンセル */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleSaveMessage(index, editingMessage.value)}
+                      disabled={saving}
+                      className="btn btn-primary flex-1 disabled:opacity-50"
+                    >
+                      {saving ? '保存中...' : '保存'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        // 空のメッセージ（新規追加中）の場合は削除
+                        if (quickMessages[index] === '') {
+                          setQuickMessages(quickMessages.filter((_, i) => i !== index));
+                        }
+                        setEditingMessage(null);
+                        setDefaultValueInput('');
+                      }}
+                      disabled={saving}
+                      className="btn btn-secondary flex-1 disabled:opacity-50"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <>
+                <div className="flex gap-2">
                   <div className="flex-1 bg-purple-50 p-3 rounded-lg">
                     {message}
                   </div>
                   <button
-                    onClick={() => setEditingMessage({index, value: message})}
+                    onClick={() => setEditingMessage({index, value: message, cursorPosition: message.length})}
                     disabled={saving}
                     className="btn btn-secondary px-4 disabled:opacity-50"
                   >
@@ -258,7 +344,7 @@ export default function SettingsPage() {
                   >
                     削除
                   </button>
-                </>
+                </div>
               )}
             </div>
           ))}

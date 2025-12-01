@@ -160,10 +160,10 @@ export default function MessagesPage() {
                       )}
                     </div>
 
-                    {/* リアクション表示（相手のメッセージのみ） */}
-                    {!isMyMessage && hasReaction && (
+                    {/* リアクション表示 */}
+                    {hasReaction && (
                       <div className="flex items-center gap-1 mt-1">
-                        <span className="text-base">{myReaction === 'like' ? '❤️' : '🤍'}</span>
+                        <span className="text-base">❤️</span>
                       </div>
                     )}
                   </div>

@@ -13,6 +13,8 @@ import { USER_STATUSES } from '@/types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import DinnerStatusCard from '@/components/DinnerStatusCard';
+import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
+import NumberInputModal from '@/components/NumberInputModal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -25,6 +27,15 @@ export default function HomePage() {
   const [sending, setSending] = useState(false);
   const [lastTap, setLastTap] = useState<{ messageId: string; time: number } | null>(null);
   const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    template: string;
+    variable: Variable | null;
+  }>({
+    isOpen: false,
+    template: '',
+    variable: null,
+  });
 
   // パートナーから受信した未読メッセージを自動的に既読にする
   useEffect(() => {
@@ -72,16 +83,32 @@ export default function HomePage() {
       return 0;
     });
 
-  const handleQuickMessage = async (template: string) => {
-    if (template.includes('{分}')) {
-      const minutes = prompt('何分後ですか？');
-      if (minutes) {
-        const message = template.replace('{分}', minutes);
-        await sendQuickMessage(message);
-      }
+  const handleQuickMessage = (template: string) => {
+    const variable = extractVariable(template);
+
+    if (variable) {
+      // 変数がある場合はモーダルを表示
+      setModalState({ isOpen: true, template, variable });
     } else {
-      await sendQuickMessage(template);
+      // 変数がない場合はそのまま送信
+      sendQuickMessage(template);
     }
+  };
+
+  const handleModalConfirm = (value: string) => {
+    if (modalState.variable) {
+      const message = replaceVariable(
+        modalState.template,
+        modalState.variable,
+        value
+      );
+      sendQuickMessage(message);
+    }
+    setModalState({ isOpen: false, template: '', variable: null });
+  };
+
+  const handleModalCancel = () => {
+    setModalState({ isOpen: false, template: '', variable: null });
   };
 
   const sendQuickMessage = async (content: string) => {
@@ -252,6 +279,13 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      <NumberInputModal
+        isOpen={modalState.isOpen}
+        defaultValue={modalState.variable?.defaultValue || ''}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
     </div>
   );
 }

@@ -1,14 +1,26 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DINNER_STATUSES, DinnerStatusType } from '@/types';
 
 export type DinnerStatusMap = Record<DinnerStatusType, string>;
 
+// 順序情報を含む型
+export type DinnerStatusData = DinnerStatusMap & {
+  _order?: DinnerStatusType[];
+};
+
 const DEFAULT_STATUSES: DinnerStatusMap = { ...DINNER_STATUSES };
+const DEFAULT_ORDER: DinnerStatusType[] = [
+  'alone',
+  'cooking',
+  'cooking_together',
+  'undecided',
+];
 
 export function useDinnerStatusOptions(pairId: string | null) {
   const [statuses, setStatuses] = useState<DinnerStatusMap>(DEFAULT_STATUSES);
+  const [statusOrder, setStatusOrder] = useState<DinnerStatusType[]>(DEFAULT_ORDER);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,28 +29,40 @@ export function useDinnerStatusOptions(pairId: string | null) {
       return;
     }
 
-    const loadStatuses = async () => {
-      try {
-        const statusesDoc = await getDoc(doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'));
-
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(
+      doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'),
+      (statusesDoc) => {
         if (!statusesDoc.exists()) {
           // カスタムステータスがない場合はデフォルトを使用
           setStatuses(DEFAULT_STATUSES);
+          setStatusOrder(DEFAULT_ORDER);
         } else {
           const data = statusesDoc.data();
-          // updatedAtなどのメタデータを除外して、ステータスのみを抽出
-          const { updatedAt, ...statusData } = data;
+          // _order と updatedAt を除外して、ステータスのみを抽出
+          const { _order, updatedAt, ...statusData } = data;
+
           setStatuses(statusData as DinnerStatusMap);
+
+          // _order がない場合はデフォルト順序を使用
+          if (_order && Array.isArray(_order)) {
+            setStatusOrder(_order as DinnerStatusType[]);
+          } else {
+            setStatusOrder(DEFAULT_ORDER);
+          }
         }
-      } catch (error) {
+        setLoading(false);
+      },
+      (error) => {
         console.error('Error loading dinner status options:', error);
         setStatuses(DEFAULT_STATUSES);
-      } finally {
+        setStatusOrder(DEFAULT_ORDER);
         setLoading(false);
       }
-    };
+    );
 
-    loadStatuses();
+    // クリーンアップ関数
+    return () => unsubscribe();
   }, [pairId]);
 
   const saveStatuses = async (newStatuses: DinnerStatusMap) => {
@@ -48,6 +72,7 @@ export function useDinnerStatusOptions(pairId: string | null) {
       const now = Timestamp.now();
       await setDoc(doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'), {
         ...newStatuses,
+        _order: statusOrder,
         updatedAt: now,
       });
 
@@ -58,5 +83,23 @@ export function useDinnerStatusOptions(pairId: string | null) {
     }
   };
 
-  return { statuses, loading, saveStatuses };
+  const reorderStatuses = async (newOrder: DinnerStatusType[]) => {
+    if (!pairId) return;
+
+    try {
+      const now = Timestamp.now();
+      await setDoc(doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'), {
+        ...statuses,
+        _order: newOrder,
+        updatedAt: now,
+      });
+
+      setStatusOrder(newOrder);
+    } catch (error) {
+      console.error('Error reordering statuses:', error);
+      throw error;
+    }
+  };
+
+  return { statuses, statusOrder, loading, saveStatuses, reorderStatuses };
 }

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/ui/Navbar';
+import Loading from '@/components/ui/Loading';
 
 export default function MainLayout({
   children,
@@ -20,11 +21,7 @@ export default function MainLayout({
   }, [user, loading, router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">読み込み中...</div>
-      </div>
-    );
+    return <Loading variant="fullscreen" />;
   }
 
   if (!user) {

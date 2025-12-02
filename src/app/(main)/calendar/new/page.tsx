@@ -15,7 +15,7 @@ export default function NewSchedulePage() {
   const searchParams = useSearchParams();
   const { userProfile } = useAuth();
   const { addSchedule } = useSchedules(userProfile?.pairId || null);
-  const { categories } = useScheduleCategories(userProfile?.pairId || null);
+  const { categories, categoryOrder } = useScheduleCategories(userProfile?.pairId || null);
 
   // クエリパラメータから日付を取得、なければ今日
   const dateParam = searchParams.get('date');
@@ -118,9 +118,9 @@ export default function NewSchedulePage() {
               className="input w-full"
               required
             >
-              {Object.entries(categories).map(([key, label]) => (
+              {categoryOrder.map((key) => (
                 <option key={key} value={key}>
-                  {label}
+                  {categories[key]}
                 </option>
               ))}
             </select>

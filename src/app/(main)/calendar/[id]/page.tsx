@@ -11,6 +11,10 @@ import { useScheduleCategories } from '@/hooks/useScheduleCategories';
 import { Schedule } from '@/types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { toast } from '@/components/ui/Toast';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Loading from '@/components/ui/Loading';
+import { showErrorToast } from '@/utils/errorHandling';
 
 export default function ScheduleDetailPage() {
   const router = useRouter();
@@ -22,6 +26,7 @@ export default function ScheduleDetailPage() {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -38,12 +43,11 @@ export default function ScheduleDetailPage() {
         if (scheduleDoc.exists()) {
           setSchedule({ id: scheduleDoc.id, ...scheduleDoc.data() } as Schedule);
         } else {
-          alert('予定が見つかりません');
+          toast.error('予定が見つかりません');
           router.push('/calendar');
         }
       } catch (error) {
-        console.error('Error fetching schedule:', error);
-        alert('予定の読み込みに失敗しました');
+        showErrorToast(error, 'fetchSchedule');
       } finally {
         setLoading(false);
       }
@@ -52,19 +56,20 @@ export default function ScheduleDetailPage() {
     fetchSchedule();
   }, [userProfile?.pairId, scheduleId, router]);
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!userProfile?.pairId || !scheduleId) return;
 
-    const confirmed = confirm('この予定を削除しますか？');
-    if (!confirmed) return;
-
+    setIsDeleteDialogOpen(false);
     setDeleting(true);
     try {
       await deleteDoc(doc(db, 'pairs', userProfile.pairId, 'schedules', scheduleId));
       router.push('/calendar');
     } catch (error) {
-      console.error('Error deleting schedule:', error);
-      alert('予定の削除に失敗しました');
+      showErrorToast(error, 'deleteSchedule');
     } finally {
       setDeleting(false);
     }
@@ -73,7 +78,7 @@ export default function ScheduleDetailPage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-4">
-        <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        <Loading />
       </div>
     );
   }
@@ -193,7 +198,7 @@ export default function ScheduleDetailPage() {
                 ✏️ 編集する
               </Link>
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={deleting}
                 className="w-full bg-red-500 hover:bg-red-600 text-white rounded-xl py-3 font-medium disabled:opacity-50"
               >
@@ -203,6 +208,17 @@ export default function ScheduleDetailPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="予定を削除"
+        message="この予定を削除してもよろしいですか？"
+        confirmText="削除"
+        cancelText="キャンセル"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+      />
     </div>
   );
 }

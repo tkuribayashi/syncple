@@ -11,13 +11,16 @@ import { format, parse } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { toast } from '@/components/ui/Toast';
+import Loading from '@/components/ui/Loading';
+import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
 
 export default function EditSchedulePage() {
   const router = useRouter();
   const params = useParams();
   const scheduleId = params.id as string;
   const { user, userProfile } = useAuth();
-  const { categories } = useScheduleCategories(userProfile?.pairId || null);
+  const { categories, categoryOrder } = useScheduleCategories(userProfile?.pairId || null);
 
   const [formData, setFormData] = useState({
     date: '',
@@ -51,7 +54,7 @@ export default function EditSchedulePage() {
 
           // 共通の予定でない場合、自分の予定でなければリダイレクト
           if (!schedule.isShared && schedule.userId !== user?.uid) {
-            alert('この予定は編集できません');
+            toast.error('この予定は編集できません');
             router.push(`/calendar/${scheduleId}`);
             return;
           }
@@ -67,12 +70,11 @@ export default function EditSchedulePage() {
             isShared: schedule.isShared || false,
           });
         } else {
-          alert('予定が見つかりません');
+          toast.error('予定が見つかりません');
           router.push('/calendar');
         }
       } catch (error) {
-        console.error('Error fetching schedule:', error);
-        alert('予定の読み込みに失敗しました');
+        showErrorToast(error, 'fetchSchedule');
         router.push('/calendar');
       } finally {
         setLoading(false);
@@ -119,7 +121,7 @@ export default function EditSchedulePage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-4">
-        <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        <Loading />
       </div>
     );
   }
@@ -175,9 +177,9 @@ export default function EditSchedulePage() {
               className="input w-full"
               required
             >
-              {Object.entries(categories).map(([key, label]) => (
+              {categoryOrder.map((key) => (
                 <option key={key} value={key}>
-                  {label}
+                  {categories[key]}
                 </option>
               ))}
             </select>

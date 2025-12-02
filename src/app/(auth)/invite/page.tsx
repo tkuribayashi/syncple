@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePair } from '@/hooks/usePair';
+import { toast } from '@/components/ui/Toast';
 
 export default function InvitePage() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function InvitePage() {
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(generatedCode);
-    alert('招待コードをコピーしました');
+    toast.success('招待コードをコピーしました');
   };
 
   if (authLoading) {

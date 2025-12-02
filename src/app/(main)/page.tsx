@@ -17,6 +17,7 @@ import { extractVariable, replaceVariable, Variable } from '@/utils/templateVari
 import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast } from '@/utils/errorHandling';
+import { getTodayDateString, sortSchedulesByTime } from '@/utils/scheduleHelpers';
 
 export default function HomePage() {
   const router = useRouter();
@@ -69,21 +70,10 @@ export default function HomePage() {
     );
   }
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todaySchedules = schedules
-    .filter(s => s.date === today)
-    .sort((a, b) => {
-      // 終日の予定を先に表示
-      if (a.isAllDay && !b.isAllDay) return -1;
-      if (!a.isAllDay && b.isAllDay) return 1;
-
-      // 両方時刻指定の場合、開始時刻順
-      if (!a.isAllDay && !b.isAllDay) {
-        return (a.startTime || '').localeCompare(b.startTime || '');
-      }
-
-      return 0;
-    });
+  const today = getTodayDateString();
+  const todaySchedules = sortSchedulesByTime(
+    schedules.filter(s => s.date === today)
+  );
 
   const handleQuickMessage = (template: string) => {
     const variable = extractVariable(template);

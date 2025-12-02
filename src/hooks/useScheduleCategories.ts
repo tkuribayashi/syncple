@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SCHEDULE_CATEGORIES } from '@/types';
 
@@ -32,10 +32,10 @@ export function useScheduleCategories(pairId: string | null) {
       return;
     }
 
-    const loadCategories = async () => {
-      try {
-        const categoriesDoc = await getDoc(doc(db, 'pairs', pairId, 'settings', 'scheduleCategories'));
-
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(
+      doc(db, 'pairs', pairId, 'settings', 'scheduleCategories'),
+      (categoriesDoc) => {
         if (!categoriesDoc.exists()) {
           // カスタムカテゴリがない場合はデフォルトを使用
           setCategories(DEFAULT_CATEGORIES);
@@ -54,16 +54,18 @@ export function useScheduleCategories(pairId: string | null) {
             setCategoryOrder(DEFAULT_ORDER);
           }
         }
-      } catch (error) {
+        setLoading(false);
+      },
+      (error) => {
         console.error('Error loading schedule categories:', error);
         setCategories(DEFAULT_CATEGORIES);
         setCategoryOrder(DEFAULT_ORDER);
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    loadCategories();
+    // クリーンアップ関数
+    return () => unsubscribe();
   }, [pairId]);
 
   const saveCategories = async (newCategories: ScheduleCategoryMap) => {

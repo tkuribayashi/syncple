@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DINNER_STATUSES, DinnerStatusType } from '@/types';
 
@@ -29,10 +29,10 @@ export function useDinnerStatusOptions(pairId: string | null) {
       return;
     }
 
-    const loadStatuses = async () => {
-      try {
-        const statusesDoc = await getDoc(doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'));
-
+    // リアルタイム監視
+    const unsubscribe = onSnapshot(
+      doc(db, 'pairs', pairId, 'settings', 'dinnerStatuses'),
+      (statusesDoc) => {
         if (!statusesDoc.exists()) {
           // カスタムステータスがない場合はデフォルトを使用
           setStatuses(DEFAULT_STATUSES);
@@ -51,16 +51,18 @@ export function useDinnerStatusOptions(pairId: string | null) {
             setStatusOrder(DEFAULT_ORDER);
           }
         }
-      } catch (error) {
+        setLoading(false);
+      },
+      (error) => {
         console.error('Error loading dinner status options:', error);
         setStatuses(DEFAULT_STATUSES);
         setStatusOrder(DEFAULT_ORDER);
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    loadStatuses();
+    // クリーンアップ関数
+    return () => unsubscribe();
   }, [pairId]);
 
   const saveStatuses = async (newStatuses: DinnerStatusMap) => {

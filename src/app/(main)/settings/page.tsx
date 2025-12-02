@@ -8,6 +8,7 @@ import { useDinnerStatusOptions, DinnerStatusMap } from '@/hooks/useDinnerStatus
 import { DinnerStatusType } from '@/types';
 import DraggableList from '@/components/DraggableList';
 import { toast } from '@/components/ui/Toast';
+import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
 
 type CalendarViewMode = '2weeks' | 'month';
 
@@ -104,8 +105,7 @@ export default function SettingsPage() {
     try {
       await saveQuickMessages(updated);
     } catch (error) {
-      console.error('Error saving message:', error);
-      toast.error('メッセージの保存に失敗しました');
+      showErrorToast(error, 'saveQuickMessage');
       // 保存失敗時は編集モードに戻す
       setEditingMessage({ index, value: newValue, cursorPosition: newValue.length });
     } finally {
@@ -160,8 +160,7 @@ export default function SettingsPage() {
     try {
       await saveQuickMessages(updated);
     } catch (error) {
-      console.error('Error deleting message:', error);
-      toast.error('メッセージの削除に失敗しました');
+      showErrorToast(error, 'deleteQuickMessage');
       // 削除失敗時は元に戻す
       setQuickMessages([...quickMessages]);
     } finally {
@@ -170,6 +169,8 @@ export default function SettingsPage() {
   };
 
   const handleReorderMessages = async (reorderedItems: Array<{ id: string; content: any }>) => {
+    const oldMessages = [...quickMessages]; // ロールバック用に保存
+
     // 並び替え後のメッセージ配列を取得
     const reorderedMessages = reorderedItems.map((item) => {
       const index = parseInt(item.id.replace('msg-', ''), 10);
@@ -181,11 +182,10 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await saveQuickMessages(reorderedMessages);
+      showSuccessToast('並び替えを保存しました');
     } catch (error) {
-      console.error('Error reordering messages:', error);
-      toast.error('メッセージの並び替えに失敗しました');
-      // 失敗時は元に戻す
-      setQuickMessages([...quickMessages]);
+      showErrorToast(error, 'reorderQuickMessages');
+      setQuickMessages(oldMessages); // 正しくロールバック
     } finally {
       setSaving(false);
     }
@@ -202,8 +202,7 @@ export default function SettingsPage() {
     try {
       await saveCategories(updated);
     } catch (error) {
-      console.error('Error saving category:', error);
-      toast.error('カテゴリの保存に失敗しました');
+      showErrorToast(error, 'saveCategory');
     } finally {
       setSaving(false);
     }
@@ -219,8 +218,7 @@ export default function SettingsPage() {
     try {
       await reorderCategories(newOrder);
     } catch (error) {
-      console.error('Error reordering categories:', error);
-      toast.error('カテゴリの並び替えに失敗しました');
+      showErrorToast(error, 'reorderCategories');
       // 失敗時は元に戻す
       setCategoryOrder([...categoryOrder]);
     } finally {
@@ -239,8 +237,7 @@ export default function SettingsPage() {
     try {
       await saveStatuses(updated);
     } catch (error) {
-      console.error('Error saving dinner status:', error);
-      toast.error('晩ご飯ステータスの保存に失敗しました');
+      showErrorToast(error, 'saveDinnerStatus');
     } finally {
       setSaving(false);
     }
@@ -256,8 +253,7 @@ export default function SettingsPage() {
     try {
       await reorderStatuses(newOrder);
     } catch (error) {
-      console.error('Error reordering statuses:', error);
-      toast.error('ステータスの並び替えに失敗しました');
+      showErrorToast(error, 'reorderStatuses');
       // 失敗時は元に戻す
       setStatusOrder([...statusOrder]);
     } finally {
@@ -277,8 +273,7 @@ export default function SettingsPage() {
       setEditingDisplayName(false);
       setNewDisplayName('');
     } catch (error) {
-      console.error('Error updating display name:', error);
-      toast.error('表示名の更新に失敗しました');
+      showErrorToast(error, 'updateDisplayName');
     } finally {
       setSaving(false);
     }

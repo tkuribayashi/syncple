@@ -12,6 +12,7 @@ import { ja } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { toast } from '@/components/ui/Toast';
+import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
 
 export default function EditSchedulePage() {
   const router = useRouter();
@@ -72,8 +73,7 @@ export default function EditSchedulePage() {
           router.push('/calendar');
         }
       } catch (error) {
-        console.error('Error fetching schedule:', error);
-        toast.error('予定の読み込みに失敗しました');
+        showErrorToast(error, 'fetchSchedule');
         router.push('/calendar');
       } finally {
         setLoading(false);

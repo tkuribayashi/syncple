@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
+import Loading from '@/components/ui/Loading';
 import { showErrorToast } from '@/utils/errorHandling';
 import { hasId } from '@/utils/typeGuards';
 
@@ -194,7 +195,7 @@ export default function MessagesPage() {
         <div className="max-w-4xl mx-auto px-4 h-full">
           <div className="card h-full overflow-y-auto space-y-3">
           {loading ? (
-            <p className="text-center text-gray-500">読み込み中...</p>
+            <Loading size="sm" />
           ) : messages.length === 0 ? (
             <p className="text-center text-gray-500">メッセージはまだありません</p>
           ) : (

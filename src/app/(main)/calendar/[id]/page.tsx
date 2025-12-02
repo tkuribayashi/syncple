@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { toast } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Loading from '@/components/ui/Loading';
 import { showErrorToast } from '@/utils/errorHandling';
 
 export default function ScheduleDetailPage() {
@@ -77,7 +78,7 @@ export default function ScheduleDetailPage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto p-4">
-        <div className="text-center text-gray-500 py-8">読み込み中...</div>
+        <Loading />
       </div>
     );
   }

@@ -10,6 +10,7 @@ import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate } from '@/utils/scheduleHelpers';
+import Loading from '@/components/ui/Loading';
 
 type ViewMode = '2weeks' | 'month';
 
@@ -110,7 +111,7 @@ export default function CalendarPage() {
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-500 py-8">読み込み中...</p>
+          <Loading />
         ) : viewMode === '2weeks' ? (
           // 2週間表示：2コラムレイアウト
           <div className="grid grid-cols-2 gap-2">

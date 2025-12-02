@@ -17,7 +17,7 @@ export default function EditSchedulePage() {
   const params = useParams();
   const scheduleId = params.id as string;
   const { user, userProfile } = useAuth();
-  const { categories } = useScheduleCategories(userProfile?.pairId || null);
+  const { categories, categoryOrder } = useScheduleCategories(userProfile?.pairId || null);
 
   const [formData, setFormData] = useState({
     date: '',
@@ -175,9 +175,9 @@ export default function EditSchedulePage() {
               className="input w-full"
               required
             >
-              {Object.entries(categories).map(([key, label]) => (
+              {categoryOrder.map((key) => (
                 <option key={key} value={key}>
-                  {label}
+                  {categories[key]}
                 </option>
               ))}
             </select>

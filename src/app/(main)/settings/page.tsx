@@ -6,14 +6,15 @@ import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
 import { useDinnerStatusOptions, DinnerStatusMap } from '@/hooks/useDinnerStatusOptions';
 import { DinnerStatusType } from '@/types';
+import DraggableList from '@/components/DraggableList';
 
 type CalendarViewMode = '2weeks' | 'month';
 
 export default function SettingsPage() {
   const { signOut, userProfile, updateDisplayName, fcm } = useAuth();
   const { quickMessages: loadedMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
-  const { categories: loadedCategories, loading: loadingCategories, saveCategories } = useScheduleCategories(userProfile?.pairId || null);
-  const { statuses: loadedStatuses, loading: loadingStatuses, saveStatuses } = useDinnerStatusOptions(userProfile?.pairId || null);
+  const { categories: loadedCategories, categoryOrder: loadedCategoryOrder, loading: loadingCategories, saveCategories, reorderCategories } = useScheduleCategories(userProfile?.pairId || null);
+  const { statuses: loadedStatuses, statusOrder: loadedStatusOrder, loading: loadingStatuses, saveStatuses, reorderStatuses } = useDinnerStatusOptions(userProfile?.pairId || null);
   const [quickMessages, setQuickMessages] = useState<string[]>([]);
   const [categories, setCategories] = useState<ScheduleCategoryMap>({
     remote: '',
@@ -23,12 +24,26 @@ export default function SettingsPage() {
     outing: '',
     other: '',
   });
+  const [categoryOrder, setCategoryOrder] = useState<ScheduleCategoryKey[]>([
+    'remote',
+    'office',
+    'business_trip',
+    'vacation',
+    'outing',
+    'other',
+  ]);
   const [dinnerStatuses, setDinnerStatuses] = useState<DinnerStatusMap>({
     alone: '',
     cooking: '',
     cooking_together: '',
     undecided: '',
   });
+  const [statusOrder, setStatusOrder] = useState<DinnerStatusType[]>([
+    'alone',
+    'cooking',
+    'cooking_together',
+    'undecided',
+  ]);
   const [editingMessage, setEditingMessage] = useState<{index: number, value: string, cursorPosition: number} | null>(null);
   const [editingCategory, setEditingCategory] = useState<{key: ScheduleCategoryKey, value: string} | null>(null);
   const [editingStatus, setEditingStatus] = useState<{key: DinnerStatusType, value: string} | null>(null);
@@ -48,14 +63,16 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!loadingCategories) {
       setCategories({ ...loadedCategories });
+      setCategoryOrder([...loadedCategoryOrder]);
     }
-  }, [loadedCategories, loadingCategories]);
+  }, [loadedCategories, loadedCategoryOrder, loadingCategories]);
 
   useEffect(() => {
     if (!loadingStatuses) {
       setDinnerStatuses({ ...loadedStatuses });
+      setStatusOrder([...loadedStatusOrder]);
     }
-  }, [loadedStatuses, loadingStatuses]);
+  }, [loadedStatuses, loadedStatusOrder, loadingStatuses]);
 
   // カレンダー表示モードをlocalStorageから読み込む
   useEffect(() => {
@@ -151,6 +168,28 @@ export default function SettingsPage() {
     }
   };
 
+  const handleReorderMessages = async (reorderedItems: Array<{ id: string; content: any }>) => {
+    // 並び替え後のメッセージ配列を取得
+    const reorderedMessages = reorderedItems.map((item) => {
+      const index = parseInt(item.id.replace('msg-', ''), 10);
+      return quickMessages[index];
+    });
+
+    setQuickMessages(reorderedMessages);
+
+    setSaving(true);
+    try {
+      await saveQuickMessages(reorderedMessages);
+    } catch (error) {
+      console.error('Error reordering messages:', error);
+      alert('メッセージの並び替えに失敗しました');
+      // 失敗時は元に戻す
+      setQuickMessages([...quickMessages]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveCategory = async (key: ScheduleCategoryKey, newValue: string) => {
     if (!newValue.trim()) return;
 
@@ -169,6 +208,25 @@ export default function SettingsPage() {
     }
   };
 
+  const handleReorderCategories = async (reorderedItems: Array<{ id: string; content: any }>) => {
+    // 並び替え後のカテゴリ順序を取得
+    const newOrder = reorderedItems.map((item) => item.id as ScheduleCategoryKey);
+
+    setCategoryOrder(newOrder);
+
+    setSaving(true);
+    try {
+      await reorderCategories(newOrder);
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+      alert('カテゴリの並び替えに失敗しました');
+      // 失敗時は元に戻す
+      setCategoryOrder([...categoryOrder]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveStatus = async (key: DinnerStatusType, newValue: string) => {
     if (!newValue.trim()) return;
 
@@ -182,6 +240,25 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error saving dinner status:', error);
       alert('晩ご飯ステータスの保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReorderStatuses = async (reorderedItems: Array<{ id: string; content: any }>) => {
+    // 並び替え後のステータス順序を取得
+    const newOrder = reorderedItems.map((item) => item.id as DinnerStatusType);
+
+    setStatusOrder(newOrder);
+
+    setSaving(true);
+    try {
+      await reorderStatuses(newOrder);
+    } catch (error) {
+      console.error('Error reordering statuses:', error);
+      alert('ステータスの並び替えに失敗しました');
+      // 失敗時は元に戻す
+      setStatusOrder([...statusOrder]);
     } finally {
       setSaving(false);
     }
@@ -236,119 +313,124 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="space-y-3">
-          {quickMessages.map((message, index) => (
-            <div key={index}>
-              {editingMessage?.index === index ? (
-                <div className="space-y-2">
-                  {/* メッセージ入力 */}
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={editingMessage.value}
-                    onChange={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      setEditingMessage({
-                        index,
-                        value: e.target.value,
-                        cursorPosition: target.selectionStart || 0,
-                      });
-                    }}
-                    onSelect={(e) => {
-                      const target = e.target as HTMLInputElement;
-                      setEditingMessage({
-                        ...editingMessage,
-                        cursorPosition: target.selectionStart || 0,
-                      });
-                    }}
-                    className="input w-full"
-                    autoFocus
-                  />
+        <DraggableList
+          items={quickMessages.map((message, index) => ({
+            id: `msg-${index}`,
+            disabled: editingMessage?.index === index || saving,
+            content: (
+              <div>
+                {editingMessage?.index === index ? (
+                  <div className="space-y-2">
+                    {/* メッセージ入力 */}
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={editingMessage.value}
+                      onChange={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        setEditingMessage({
+                          index,
+                          value: e.target.value,
+                          cursorPosition: target.selectionStart || 0,
+                        });
+                      }}
+                      onSelect={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        setEditingMessage({
+                          ...editingMessage,
+                          cursorPosition: target.selectionStart || 0,
+                        });
+                      }}
+                      className="input w-full"
+                      autoFocus
+                    />
 
-                  {/* 変数挿入UI */}
-                  <div className="bg-purple-50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-semibold text-gray-700">
-                      数値変数を挿入:
-                    </p>
+                    {/* 変数挿入UI */}
+                    <div className="bg-purple-50 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-semibold text-gray-700">
+                        数値変数を挿入:
+                      </p>
 
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        placeholder="初期値"
-                        value={defaultValueInput}
-                        onChange={(e) => setDefaultValueInput(e.target.value)}
-                        className="input w-20 text-sm px-2"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="初期値"
+                          value={defaultValueInput}
+                          onChange={(e) => setDefaultValueInput(e.target.value)}
+                          className="input w-20 text-sm px-2"
+                        />
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const variable = defaultValueInput
-                            ? `{n=${defaultValueInput}}`
-                            : '{n}';
-                          insertVariable(variable);
-                        }}
-                        className="px-3 py-1.5 text-sm bg-white border border-purple-200 rounded-lg hover:bg-purple-100"
-                      >
-                        {'{n}'}を挿入
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const variable = defaultValueInput
+                              ? `{n=${defaultValueInput}}`
+                              : '{n}';
+                            insertVariable(variable);
+                          }}
+                          className="px-3 py-1.5 text-sm bg-white border border-purple-200 rounded-lg hover:bg-purple-100"
+                        >
+                          {'{n}'}を挿入
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        例: 「{'{n}'}分後に帰る」「あと{'{n=30}'}分で着く」
+                      </p>
                     </div>
 
-                    <p className="text-xs text-gray-500">
-                      例: 「{'{n}'}分後に帰る」「あと{'{n=30}'}分で着く」
-                    </p>
+                    {/* 保存/キャンセル */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveMessage(index, editingMessage.value)}
+                        disabled={saving}
+                        className="btn btn-primary flex-1 disabled:opacity-50"
+                      >
+                        {saving ? '保存中...' : '保存'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          // 空のメッセージ（新規追加中）の場合は削除
+                          if (quickMessages[index] === '') {
+                            setQuickMessages(quickMessages.filter((_, i) => i !== index));
+                          }
+                          setEditingMessage(null);
+                          setDefaultValueInput('');
+                        }}
+                        disabled={saving}
+                        className="btn btn-secondary flex-1 disabled:opacity-50"
+                      >
+                        キャンセル
+                      </button>
+                    </div>
                   </div>
-
-                  {/* 保存/キャンセル */}
+                ) : (
                   <div className="flex gap-2">
+                    <div className="flex-1 bg-purple-50 p-3 rounded-lg">
+                      {message}
+                    </div>
                     <button
-                      onClick={() => handleSaveMessage(index, editingMessage.value)}
+                      onClick={() => setEditingMessage({index, value: message, cursorPosition: message.length})}
                       disabled={saving}
-                      className="btn btn-primary flex-1 disabled:opacity-50"
+                      className="btn btn-secondary px-4 disabled:opacity-50"
                     >
-                      {saving ? '保存中...' : '保存'}
+                      編集
                     </button>
                     <button
-                      onClick={() => {
-                        // 空のメッセージ（新規追加中）の場合は削除
-                        if (quickMessages[index] === '') {
-                          setQuickMessages(quickMessages.filter((_, i) => i !== index));
-                        }
-                        setEditingMessage(null);
-                        setDefaultValueInput('');
-                      }}
-                      disabled={saving}
-                      className="btn btn-secondary flex-1 disabled:opacity-50"
+                      onClick={() => handleDeleteMessage(index)}
+                      disabled={quickMessages.length <= 1 || saving}
+                      className="btn btn-secondary px-4 disabled:opacity-50"
                     >
-                      キャンセル
+                      削除
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-purple-50 p-3 rounded-lg">
-                    {message}
-                  </div>
-                  <button
-                    onClick={() => setEditingMessage({index, value: message, cursorPosition: message.length})}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMessage(index)}
-                    disabled={quickMessages.length <= 1 || saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    削除
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ),
+          }))}
+          onReorder={handleReorderMessages}
+        />
 
         <p className="text-xs text-gray-500 mt-4">
           ※ クイックメッセージは最大12個まで設定できます
@@ -358,99 +440,109 @@ export default function SettingsPage() {
       {/* 予定カテゴリ設定 */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">予定カテゴリ</h2>
-        <div className="space-y-3">
-          {(Object.keys(categories) as ScheduleCategoryKey[]).map((key) => (
-            <div key={key} className="flex gap-2">
-              {editingCategory?.key === key ? (
-                <>
-                  <input
-                    type="text"
-                    value={editingCategory.value}
-                    onChange={(e) => setEditingCategory({key, value: e.target.value})}
-                    className="input flex-1"
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => handleSaveCategory(key, editingCategory.value)}
-                    disabled={saving}
-                    className="btn btn-primary px-4 disabled:opacity-50"
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                  <button
-                    onClick={() => setEditingCategory(null)}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    キャンセル
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="flex-1 bg-purple-50 p-3 rounded-lg">
-                    {categories[key]}
+        <DraggableList
+          items={categoryOrder.map((key) => ({
+            id: key,
+            disabled: editingCategory?.key === key || saving,
+            content: (
+              <div>
+                {editingCategory?.key === key ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingCategory.value}
+                      onChange={(e) => setEditingCategory({key, value: e.target.value})}
+                      className="input flex-1"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleSaveCategory(key, editingCategory.value)}
+                      disabled={saving}
+                      className="btn btn-primary px-4 disabled:opacity-50"
+                    >
+                      {saving ? '保存中...' : '保存'}
+                    </button>
+                    <button
+                      onClick={() => setEditingCategory(null)}
+                      disabled={saving}
+                      className="btn btn-secondary px-4 disabled:opacity-50"
+                    >
+                      キャンセル
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setEditingCategory({key, value: categories[key]})}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    編集
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="flex-1 bg-purple-50 p-3 rounded-lg">
+                      {categories[key]}
+                    </div>
+                    <button
+                      onClick={() => setEditingCategory({key, value: categories[key]})}
+                      disabled={saving}
+                      className="btn btn-secondary px-4 disabled:opacity-50"
+                    >
+                      編集
+                    </button>
+                  </div>
+                )}
+              </div>
+            ),
+          }))}
+          onReorder={handleReorderCategories}
+        />
       </div>
 
       {/* 晩ご飯ステータス設定 */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">晩ご飯ステータス</h2>
-        <div className="space-y-3">
-          {(Object.keys(dinnerStatuses) as DinnerStatusType[]).map((key) => (
-            <div key={key} className="flex gap-2">
-              {editingStatus?.key === key ? (
-                <>
-                  <input
-                    type="text"
-                    value={editingStatus.value}
-                    onChange={(e) => setEditingStatus({key, value: e.target.value})}
-                    className="input flex-1"
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => handleSaveStatus(key, editingStatus.value)}
-                    disabled={saving}
-                    className="btn btn-primary px-4 disabled:opacity-50"
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                  <button
-                    onClick={() => setEditingStatus(null)}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    キャンセル
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="flex-1 bg-purple-50 p-3 rounded-lg">
-                    {dinnerStatuses[key]}
+        <DraggableList
+          items={statusOrder.map((key) => ({
+            id: key,
+            disabled: editingStatus?.key === key || saving,
+            content: (
+              <div>
+                {editingStatus?.key === key ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingStatus.value}
+                      onChange={(e) => setEditingStatus({key, value: e.target.value})}
+                      className="input flex-1"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleSaveStatus(key, editingStatus.value)}
+                      disabled={saving}
+                      className="btn btn-primary px-4 disabled:opacity-50"
+                    >
+                      {saving ? '保存中...' : '保存'}
+                    </button>
+                    <button
+                      onClick={() => setEditingStatus(null)}
+                      disabled={saving}
+                      className="btn btn-secondary px-4 disabled:opacity-50"
+                    >
+                      キャンセル
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setEditingStatus({key, value: dinnerStatuses[key]})}
-                    disabled={saving}
-                    className="btn btn-secondary px-4 disabled:opacity-50"
-                  >
-                    編集
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="flex-1 bg-purple-50 p-3 rounded-lg">
+                      {dinnerStatuses[key]}
+                    </div>
+                    <button
+                      onClick={() => setEditingStatus({key, value: dinnerStatuses[key]})}
+                      disabled={saving}
+                      className="btn btn-secondary px-4 disabled:opacity-50"
+                    >
+                      編集
+                    </button>
+                  </div>
+                )}
+              </div>
+            ),
+          }))}
+          onReorder={handleReorderStatuses}
+        />
       </div>
 
       {/* カレンダー表示設定 */}

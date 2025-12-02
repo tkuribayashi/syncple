@@ -11,7 +11,7 @@ interface DinnerStatusCardProps {
 
 export default function DinnerStatusCard({ pairId }: DinnerStatusCardProps) {
   const { myStatus, partnerStatus, loading, updateStatus } = useDinnerStatus(pairId);
-  const { statuses, loading: loadingStatuses } = useDinnerStatusOptions(pairId);
+  const { statuses, statusOrder, loading: loadingStatuses } = useDinnerStatusOptions(pairId);
   const { partner } = usePair();
 
   if (loading || loadingStatuses) {
@@ -31,7 +31,7 @@ export default function DinnerStatusCard({ pairId }: DinnerStatusCardProps) {
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-2">あなた</p>
         <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(statuses) as DinnerStatusType[]).map((status) => (
+          {statusOrder.map((status) => (
             <button
               key={status}
               onClick={() => updateStatus(status)}

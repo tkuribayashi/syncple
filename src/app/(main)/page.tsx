@@ -18,6 +18,7 @@ import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast } from '@/utils/errorHandling';
 import { getTodayDateString, sortSchedulesByTime } from '@/utils/scheduleHelpers';
+import { hasId } from '@/utils/typeGuards';
 
 export default function HomePage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function HomePage() {
     if (unreadPartnerMessages.length > 0) {
       // 既読マーク処理（非同期・バックグラウンド）
       Promise.all(
-        unreadPartnerMessages.map(msg => markAsRead(msg.id!))
+        unreadPartnerMessages.filter(hasId).map(msg => markAsRead(msg.id))
       ).catch(err => console.error('Failed to mark messages as read:', err));
     }
   }, [messages, user, markAsRead]);

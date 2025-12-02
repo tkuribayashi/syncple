@@ -8,6 +8,7 @@ import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { format } from 'date-fns';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
+import { toast } from '@/components/ui/Toast';
 
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
@@ -56,7 +57,7 @@ export default function MessagesPage() {
       setMessageInput('');
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('メッセージの送信に失敗しました');
+      toast.error('メッセージの送信に失敗しました');
     } finally {
       setSending(false);
     }
@@ -153,7 +154,7 @@ export default function MessagesPage() {
       setDeleteMenuMessageId(null);
     } catch (error) {
       console.error('Error deleting message:', error);
-      alert('メッセージの削除に失敗しました');
+      toast.error('メッセージの削除に失敗しました');
     }
   };
 

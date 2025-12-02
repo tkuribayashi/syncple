@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import EnvRibbon from '@/components/EnvRibbon';
+import ToastProvider from '@/components/ui/Toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <EnvRibbon />
+        <ToastProvider />
         <AuthProvider>
           {children}
         </AuthProvider>

@@ -15,6 +15,7 @@ import { ja } from 'date-fns/locale';
 import DinnerStatusCard from '@/components/DinnerStatusCard';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
+import { toast } from '@/components/ui/Toast';
 
 export default function HomePage() {
   const router = useRouter();
@@ -117,7 +118,7 @@ export default function HomePage() {
       await sendMessage(content);
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('メッセージの送信に失敗しました');
+      toast.error('メッセージの送信に失敗しました');
     } finally {
       setSending(false);
     }

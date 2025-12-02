@@ -19,13 +19,14 @@ import { toast } from '@/components/ui/Toast';
 import { showErrorToast } from '@/utils/errorHandling';
 import { getTodayDateString, sortSchedulesByTime } from '@/utils/scheduleHelpers';
 import { hasId } from '@/utils/typeGuards';
+import { MESSAGE } from '@/constants/app';
 
 export default function HomePage() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { pair, partner, loading: pairLoading } = usePair();
   const { schedules, loading: schedulesLoading } = useSchedules(userProfile?.pairId || null);
-  const { messages, loading: messagesLoading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null, 10);
+  const { messages, loading: messagesLoading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null, MESSAGE.HOME_MESSAGE_LIMIT);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const { categories } = useScheduleCategories(userProfile?.pairId || null);
   const [sending, setSending] = useState(false);
@@ -117,12 +118,11 @@ export default function HomePage() {
 
   const handleMessageTap = (messageId: string) => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
 
-    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < DOUBLE_TAP_DELAY) {
+    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < MESSAGE.DOUBLE_TAP_DELAY) {
       // ダブルタップ検出
       setAnimatingMessageId(messageId);
-      setTimeout(() => setAnimatingMessageId(null), 600);
+      setTimeout(() => setAnimatingMessageId(null), MESSAGE.ANIMATION_DURATION);
       toggleReaction(messageId);
       setLastTap(null);
     } else {

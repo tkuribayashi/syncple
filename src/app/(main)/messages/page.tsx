@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/Toast';
 import Loading from '@/components/ui/Loading';
 import { showErrorToast } from '@/utils/errorHandling';
 import { hasId } from '@/utils/typeGuards';
+import { MESSAGE } from '@/constants/app';
 
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
@@ -109,7 +110,7 @@ export default function MessagesPage() {
 
     const timer = setTimeout(() => {
       setDeleteMenuMessageId(messageId);
-    }, 500);
+    }, MESSAGE.LONG_PRESS_DELAY);
 
     setLongPressTimer(timer);
   };
@@ -134,8 +135,8 @@ export default function MessagesPage() {
     const dy = clientY - touchStart.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // 10px以上移動したらキャンセル（スクロールと判定）
-    if (distance > 10) {
+    // 移動したらキャンセル（スクロールと判定）
+    if (distance > MESSAGE.POINTER_MOVE_THRESHOLD) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
       setTouchStart(null);
@@ -161,12 +162,11 @@ export default function MessagesPage() {
 
   const handleMessageTap = (messageId: string) => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
 
-    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < DOUBLE_TAP_DELAY) {
+    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < MESSAGE.DOUBLE_TAP_DELAY) {
       // ダブルタップ検出
       setAnimatingMessageId(messageId);
-      setTimeout(() => setAnimatingMessageId(null), 600);
+      setTimeout(() => setAnimatingMessageId(null), MESSAGE.ANIMATION_DURATION);
       toggleReaction(messageId);
       setLastTap(null);
     } else {

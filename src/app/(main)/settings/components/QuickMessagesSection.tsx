@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import DraggableList from '@/components/DraggableList';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
+import { QUICK_MESSAGE } from '@/constants/app';
 
 interface QuickMessagesSectionProps {
   quickMessages: string[];
@@ -72,7 +73,7 @@ export default function QuickMessagesSection({
   };
 
   const handleAddMessage = () => {
-    if (quickMessages.length >= 12) return;
+    if (quickMessages.length >= QUICK_MESSAGE.MAX) return;
 
     const newIndex = quickMessages.length;
     setQuickMessages([...quickMessages, '']);
@@ -80,7 +81,7 @@ export default function QuickMessagesSection({
   };
 
   const handleDeleteMessage = async (index: number) => {
-    if (quickMessages.length <= 1) return;
+    if (quickMessages.length <= QUICK_MESSAGE.MIN) return;
 
     const updated = quickMessages.filter((_, i) => i !== index);
     setQuickMessages(updated);
@@ -124,7 +125,7 @@ export default function QuickMessagesSection({
         <h2 className="text-lg font-bold text-gray-900">クイックメッセージ</h2>
         <button
           onClick={handleAddMessage}
-          disabled={quickMessages.length >= 12 || saving}
+          disabled={quickMessages.length >= QUICK_MESSAGE.MAX || saving}
           className="btn btn-primary text-sm py-2 disabled:opacity-50"
         >
           {saving ? '保存中...' : '+ 追加'}

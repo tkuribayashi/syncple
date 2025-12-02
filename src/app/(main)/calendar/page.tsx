@@ -11,6 +11,7 @@ import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate } from '@/utils/scheduleHelpers';
 import Loading from '@/components/ui/Loading';
+import { CALENDAR } from '@/constants/app';
 
 type ViewMode = '2weeks' | 'month';
 
@@ -72,7 +73,7 @@ export default function CalendarPage() {
 
   // 表示日数を計算
   const getDaysCount = () => {
-    return viewMode === '2weeks' ? 14 : 30;
+    return viewMode === '2weeks' ? CALENDAR.TWO_WEEKS_DAYS : CALENDAR.MONTH_DAYS;
   };
 
   const daysCount = getDaysCount();

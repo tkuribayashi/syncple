@@ -7,6 +7,7 @@ import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from 
 import { useDinnerStatusOptions, DinnerStatusMap } from '@/hooks/useDinnerStatusOptions';
 import { DinnerStatusType } from '@/types';
 import DraggableList from '@/components/DraggableList';
+import { toast } from '@/components/ui/Toast';
 
 type CalendarViewMode = '2weeks' | 'month';
 
@@ -90,7 +91,7 @@ export default function SettingsPage() {
   const handleSaveMessage = async (index: number, newValue: string) => {
     if (!newValue.trim()) {
       // 空の場合は保存せずにキャンセル扱い
-      alert('メッセージを入力してください');
+      toast.error('メッセージを入力してください');
       return;
     }
 
@@ -104,7 +105,7 @@ export default function SettingsPage() {
       await saveQuickMessages(updated);
     } catch (error) {
       console.error('Error saving message:', error);
-      alert('メッセージの保存に失敗しました');
+      toast.error('メッセージの保存に失敗しました');
       // 保存失敗時は編集モードに戻す
       setEditingMessage({ index, value: newValue, cursorPosition: newValue.length });
     } finally {
@@ -160,7 +161,7 @@ export default function SettingsPage() {
       await saveQuickMessages(updated);
     } catch (error) {
       console.error('Error deleting message:', error);
-      alert('メッセージの削除に失敗しました');
+      toast.error('メッセージの削除に失敗しました');
       // 削除失敗時は元に戻す
       setQuickMessages([...quickMessages]);
     } finally {
@@ -182,7 +183,7 @@ export default function SettingsPage() {
       await saveQuickMessages(reorderedMessages);
     } catch (error) {
       console.error('Error reordering messages:', error);
-      alert('メッセージの並び替えに失敗しました');
+      toast.error('メッセージの並び替えに失敗しました');
       // 失敗時は元に戻す
       setQuickMessages([...quickMessages]);
     } finally {
@@ -202,7 +203,7 @@ export default function SettingsPage() {
       await saveCategories(updated);
     } catch (error) {
       console.error('Error saving category:', error);
-      alert('カテゴリの保存に失敗しました');
+      toast.error('カテゴリの保存に失敗しました');
     } finally {
       setSaving(false);
     }
@@ -219,7 +220,7 @@ export default function SettingsPage() {
       await reorderCategories(newOrder);
     } catch (error) {
       console.error('Error reordering categories:', error);
-      alert('カテゴリの並び替えに失敗しました');
+      toast.error('カテゴリの並び替えに失敗しました');
       // 失敗時は元に戻す
       setCategoryOrder([...categoryOrder]);
     } finally {
@@ -239,7 +240,7 @@ export default function SettingsPage() {
       await saveStatuses(updated);
     } catch (error) {
       console.error('Error saving dinner status:', error);
-      alert('晩ご飯ステータスの保存に失敗しました');
+      toast.error('晩ご飯ステータスの保存に失敗しました');
     } finally {
       setSaving(false);
     }
@@ -256,7 +257,7 @@ export default function SettingsPage() {
       await reorderStatuses(newOrder);
     } catch (error) {
       console.error('Error reordering statuses:', error);
-      alert('ステータスの並び替えに失敗しました');
+      toast.error('ステータスの並び替えに失敗しました');
       // 失敗時は元に戻す
       setStatusOrder([...statusOrder]);
     } finally {
@@ -266,7 +267,7 @@ export default function SettingsPage() {
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim()) {
-      alert('表示名を入力してください');
+      toast.error('表示名を入力してください');
       return;
     }
 
@@ -277,7 +278,7 @@ export default function SettingsPage() {
       setNewDisplayName('');
     } catch (error) {
       console.error('Error updating display name:', error);
-      alert('表示名の更新に失敗しました');
+      toast.error('表示名の更新に失敗しました');
     } finally {
       setSaving(false);
     }
@@ -599,9 +600,9 @@ export default function SettingsPage() {
                 onClick={async () => {
                   const granted = await fcm.requestPermission();
                   if (granted) {
-                    alert('通知が有効になりました！');
+                    toast.success('通知が有効になりました！');
                   } else {
-                    alert('通知が拒否されました。ブラウザの設定から変更できます。');
+                    toast.error('通知が拒否されました。ブラウザの設定から変更できます。');
                   }
                 }}
                 disabled={fcm.isRequesting}

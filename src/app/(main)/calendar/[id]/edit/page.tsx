@@ -11,6 +11,7 @@ import { format, parse } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { toast } from '@/components/ui/Toast';
 
 export default function EditSchedulePage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function EditSchedulePage() {
 
           // 共通の予定でない場合、自分の予定でなければリダイレクト
           if (!schedule.isShared && schedule.userId !== user?.uid) {
-            alert('この予定は編集できません');
+            toast.error('この予定は編集できません');
             router.push(`/calendar/${scheduleId}`);
             return;
           }
@@ -67,12 +68,12 @@ export default function EditSchedulePage() {
             isShared: schedule.isShared || false,
           });
         } else {
-          alert('予定が見つかりません');
+          toast.error('予定が見つかりません');
           router.push('/calendar');
         }
       } catch (error) {
         console.error('Error fetching schedule:', error);
-        alert('予定の読み込みに失敗しました');
+        toast.error('予定の読み込みに失敗しました');
         router.push('/calendar');
       } finally {
         setLoading(false);

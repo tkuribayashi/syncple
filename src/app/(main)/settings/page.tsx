@@ -9,6 +9,7 @@ import { DinnerStatusType } from '@/types';
 import DraggableList from '@/components/DraggableList';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
+import EditableListItem from '@/components/EditableListItem';
 
 type CalendarViewMode = '2weeks' | 'month';
 
@@ -441,46 +442,15 @@ export default function SettingsPage() {
             id: key,
             disabled: editingCategory?.key === key || saving,
             content: (
-              <div>
-                {editingCategory?.key === key ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editingCategory.value}
-                      onChange={(e) => setEditingCategory({key, value: e.target.value})}
-                      className="input flex-1"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleSaveCategory(key, editingCategory.value)}
-                      disabled={saving}
-                      className="btn btn-primary px-4 disabled:opacity-50"
-                    >
-                      {saving ? '保存中...' : '保存'}
-                    </button>
-                    <button
-                      onClick={() => setEditingCategory(null)}
-                      disabled={saving}
-                      className="btn btn-secondary px-4 disabled:opacity-50"
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <div className="flex-1 bg-purple-50 p-3 rounded-lg">
-                      {categories[key]}
-                    </div>
-                    <button
-                      onClick={() => setEditingCategory({key, value: categories[key]})}
-                      disabled={saving}
-                      className="btn btn-secondary px-4 disabled:opacity-50"
-                    >
-                      編集
-                    </button>
-                  </div>
-                )}
-              </div>
+              <EditableListItem
+                value={categories[key]}
+                isEditing={editingCategory?.key === key}
+                onEdit={() => setEditingCategory({key, value: categories[key]})}
+                onSave={async (newValue) => await handleSaveCategory(key, newValue)}
+                onCancel={() => setEditingCategory(null)}
+                disabled={saving}
+                saving={saving}
+              />
             ),
           }))}
           onReorder={handleReorderCategories}
@@ -495,46 +465,15 @@ export default function SettingsPage() {
             id: key,
             disabled: editingStatus?.key === key || saving,
             content: (
-              <div>
-                {editingStatus?.key === key ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={editingStatus.value}
-                      onChange={(e) => setEditingStatus({key, value: e.target.value})}
-                      className="input flex-1"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleSaveStatus(key, editingStatus.value)}
-                      disabled={saving}
-                      className="btn btn-primary px-4 disabled:opacity-50"
-                    >
-                      {saving ? '保存中...' : '保存'}
-                    </button>
-                    <button
-                      onClick={() => setEditingStatus(null)}
-                      disabled={saving}
-                      className="btn btn-secondary px-4 disabled:opacity-50"
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <div className="flex-1 bg-purple-50 p-3 rounded-lg">
-                      {dinnerStatuses[key]}
-                    </div>
-                    <button
-                      onClick={() => setEditingStatus({key, value: dinnerStatuses[key]})}
-                      disabled={saving}
-                      className="btn btn-secondary px-4 disabled:opacity-50"
-                    >
-                      編集
-                    </button>
-                  </div>
-                )}
-              </div>
+              <EditableListItem
+                value={dinnerStatuses[key]}
+                isEditing={editingStatus?.key === key}
+                onEdit={() => setEditingStatus({key, value: dinnerStatuses[key]})}
+                onSave={async (newValue) => await handleSaveStatus(key, newValue)}
+                onCancel={() => setEditingStatus(null)}
+                disabled={saving}
+                saving={saving}
+              />
             ),
           }))}
           onReorder={handleReorderStatuses}

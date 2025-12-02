@@ -16,13 +16,17 @@ import DinnerStatusCard from '@/components/DinnerStatusCard';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
+import { showErrorToast } from '@/utils/errorHandling';
+import { getTodayDateString, sortSchedulesByTime } from '@/utils/scheduleHelpers';
+import { hasId } from '@/utils/typeGuards';
+import { MESSAGE } from '@/constants/app';
 
 export default function HomePage() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
   const { pair, partner, loading: pairLoading } = usePair();
   const { schedules, loading: schedulesLoading } = useSchedules(userProfile?.pairId || null);
-  const { messages, loading: messagesLoading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null, 10);
+  const { messages, loading: messagesLoading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null, MESSAGE.HOME_MESSAGE_LIMIT);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
   const { categories } = useScheduleCategories(userProfile?.pairId || null);
   const [sending, setSending] = useState(false);
@@ -49,7 +53,7 @@ export default function HomePage() {
     if (unreadPartnerMessages.length > 0) {
       // 既読マーク処理（非同期・バックグラウンド）
       Promise.all(
-        unreadPartnerMessages.map(msg => markAsRead(msg.id!))
+        unreadPartnerMessages.filter(hasId).map(msg => markAsRead(msg.id))
       ).catch(err => console.error('Failed to mark messages as read:', err));
     }
   }, [messages, user, markAsRead]);
@@ -68,21 +72,10 @@ export default function HomePage() {
     );
   }
 
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todaySchedules = schedules
-    .filter(s => s.date === today)
-    .sort((a, b) => {
-      // 終日の予定を先に表示
-      if (a.isAllDay && !b.isAllDay) return -1;
-      if (!a.isAllDay && b.isAllDay) return 1;
-
-      // 両方時刻指定の場合、開始時刻順
-      if (!a.isAllDay && !b.isAllDay) {
-        return (a.startTime || '').localeCompare(b.startTime || '');
-      }
-
-      return 0;
-    });
+  const today = getTodayDateString();
+  const todaySchedules = sortSchedulesByTime(
+    schedules.filter(s => s.date === today)
+  );
 
   const handleQuickMessage = (template: string) => {
     const variable = extractVariable(template);
@@ -117,8 +110,7 @@ export default function HomePage() {
     try {
       await sendMessage(content);
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('メッセージの送信に失敗しました');
+      showErrorToast(error, 'sendMessage');
     } finally {
       setSending(false);
     }
@@ -126,12 +118,11 @@ export default function HomePage() {
 
   const handleMessageTap = (messageId: string) => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
 
-    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < DOUBLE_TAP_DELAY) {
+    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < MESSAGE.DOUBLE_TAP_DELAY) {
       // ダブルタップ検出
       setAnimatingMessageId(messageId);
-      setTimeout(() => setAnimatingMessageId(null), 600);
+      setTimeout(() => setAnimatingMessageId(null), MESSAGE.ANIMATION_DURATION);
       toggleReaction(messageId);
       setLastTap(null);
     } else {

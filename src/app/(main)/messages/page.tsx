@@ -9,6 +9,10 @@ import { format } from 'date-fns';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
+import Loading from '@/components/ui/Loading';
+import { showErrorToast } from '@/utils/errorHandling';
+import { hasId } from '@/utils/typeGuards';
+import { MESSAGE } from '@/constants/app';
 
 export default function MessagesPage() {
   const { user, userProfile } = useAuth();
@@ -43,7 +47,7 @@ export default function MessagesPage() {
     if (unreadPartnerMessages.length > 0) {
       // 既読マーク処理（非同期・バックグラウンド）
       Promise.all(
-        unreadPartnerMessages.map(msg => markAsRead(msg.id!))
+        unreadPartnerMessages.filter(hasId).map(msg => markAsRead(msg.id))
       ).catch(err => console.error('Failed to mark messages as read:', err));
     }
   }, [messages, user, markAsRead]);
@@ -56,8 +60,7 @@ export default function MessagesPage() {
       await sendMessage(content);
       setMessageInput('');
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('メッセージの送信に失敗しました');
+      showErrorToast(error, 'sendMessage');
     } finally {
       setSending(false);
     }
@@ -107,7 +110,7 @@ export default function MessagesPage() {
 
     const timer = setTimeout(() => {
       setDeleteMenuMessageId(messageId);
-    }, 500);
+    }, MESSAGE.LONG_PRESS_DELAY);
 
     setLongPressTimer(timer);
   };
@@ -132,8 +135,8 @@ export default function MessagesPage() {
     const dy = clientY - touchStart.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // 10px以上移動したらキャンセル（スクロールと判定）
-    if (distance > 10) {
+    // 移動したらキャンセル（スクロールと判定）
+    if (distance > MESSAGE.POINTER_MOVE_THRESHOLD) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
       setTouchStart(null);
@@ -153,19 +156,17 @@ export default function MessagesPage() {
       await deleteMessage(messageId);
       setDeleteMenuMessageId(null);
     } catch (error) {
-      console.error('Error deleting message:', error);
-      toast.error('メッセージの削除に失敗しました');
+      showErrorToast(error, 'deleteMessage');
     }
   };
 
   const handleMessageTap = (messageId: string) => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // 300ms以内の2回目のタップをダブルタップと判定
 
-    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < DOUBLE_TAP_DELAY) {
+    if (lastTap && lastTap.messageId === messageId && now - lastTap.time < MESSAGE.DOUBLE_TAP_DELAY) {
       // ダブルタップ検出
       setAnimatingMessageId(messageId);
-      setTimeout(() => setAnimatingMessageId(null), 600);
+      setTimeout(() => setAnimatingMessageId(null), MESSAGE.ANIMATION_DURATION);
       toggleReaction(messageId);
       setLastTap(null);
     } else {
@@ -194,7 +195,7 @@ export default function MessagesPage() {
         <div className="max-w-4xl mx-auto px-4 h-full">
           <div className="card h-full overflow-y-auto space-y-3">
           {loading ? (
-            <p className="text-center text-gray-500">読み込み中...</p>
+            <Loading size="sm" />
           ) : messages.length === 0 ? (
             <p className="text-center text-gray-500">メッセージはまだありません</p>
           ) : (

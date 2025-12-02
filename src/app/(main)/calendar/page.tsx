@@ -9,6 +9,9 @@ import { useSchedules } from '@/hooks/useSchedules';
 import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { getSchedulesForDate } from '@/utils/scheduleHelpers';
+import Loading from '@/components/ui/Loading';
+import { CALENDAR } from '@/constants/app';
 
 type ViewMode = '2weeks' | 'month';
 
@@ -70,29 +73,11 @@ export default function CalendarPage() {
 
   // 表示日数を計算
   const getDaysCount = () => {
-    return viewMode === '2weeks' ? 14 : 30;
+    return viewMode === '2weeks' ? CALENDAR.TWO_WEEKS_DAYS : CALENDAR.MONTH_DAYS;
   };
 
   const daysCount = getDaysCount();
   const weekDays = Array.from({ length: daysCount }, (_, i) => addDays(startDate, i));
-
-  const getSchedulesForDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return schedules
-      .filter(s => s.date === dateStr)
-      .sort((a, b) => {
-        // 終日の予定を先に表示
-        if (a.isAllDay && !b.isAllDay) return -1;
-        if (!a.isAllDay && b.isAllDay) return 1;
-
-        // 両方時刻指定の場合、開始時刻順
-        if (!a.isAllDay && !b.isAllDay) {
-          return (a.startTime || '').localeCompare(b.startTime || '');
-        }
-
-        return 0;
-      });
-  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 pb-24">
@@ -127,12 +112,12 @@ export default function CalendarPage() {
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-500 py-8">読み込み中...</p>
+          <Loading />
         ) : viewMode === '2weeks' ? (
           // 2週間表示：2コラムレイアウト
           <div className="grid grid-cols-2 gap-2">
             {weekDays.map((day, index) => {
-              const daySchedules = getSchedulesForDate(day);
+              const daySchedules = getSchedulesForDate(schedules, day);
               const isToday = isSameDay(day, new Date());
               const dayOfWeek = day.getDay();
 
@@ -226,7 +211,7 @@ export default function CalendarPage() {
             {/* カレンダーグリッド */}
             <div className="grid grid-cols-7 gap-1">
               {weekDays.map((day, index) => {
-                const daySchedules = getSchedulesForDate(day);
+                const daySchedules = getSchedulesForDate(schedules, day);
                 const isToday = isSameDay(day, new Date());
                 const dayOfWeek = day.getDay();
 

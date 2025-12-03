@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { Schedule } from '@/types';
 
 /**
@@ -21,11 +21,55 @@ export function sortSchedulesByTime(schedules: Schedule[]): Schedule[] {
 }
 
 /**
+ * 複数日にまたがる予定かどうか判定
+ */
+export function isMultiDaySchedule(schedule: Schedule): boolean {
+  return !!schedule.endDate && schedule.endDate > schedule.date;
+}
+
+/**
+ * 指定日が予定期間内に含まれるか判定
+ */
+export function isScheduleInDateRange(schedule: Schedule, targetDate: Date): boolean {
+  const dateStr = format(targetDate, 'yyyy-MM-dd');
+
+  if (!schedule.endDate) {
+    // 単日予定
+    return schedule.date === dateStr;
+  }
+
+  // 複数日予定
+  return schedule.date <= dateStr && schedule.endDate >= dateStr;
+}
+
+/**
+ * 予定期間の日数を計算
+ */
+export function getScheduleDurationDays(schedule: Schedule): number {
+  if (!schedule.endDate) return 1;
+
+  const start = new Date(schedule.date);
+  const end = new Date(schedule.endDate);
+  return differenceInDays(end, start) + 1;
+}
+
+/**
+ * 指定日が予定期間内の何日目かを計算（1始まり）
+ */
+export function getScheduleDayNumber(schedule: Schedule, targetDate: Date): number | null {
+  if (!isScheduleInDateRange(schedule, targetDate)) return null;
+
+  const dateStr = format(targetDate, 'yyyy-MM-dd');
+  const start = new Date(schedule.date);
+  const target = new Date(dateStr);
+  return differenceInDays(target, start) + 1;
+}
+
+/**
  * 指定日の予定をフィルタリング＆ソート
  */
 export function getSchedulesForDate(schedules: Schedule[], date: Date): Schedule[] {
-  const dateStr = format(date, 'yyyy-MM-dd');
-  const filtered = schedules.filter(s => s.date === dateStr);
+  const filtered = schedules.filter(s => isScheduleInDateRange(s, date));
   return sortSchedulesByTime(filtered);
 }
 

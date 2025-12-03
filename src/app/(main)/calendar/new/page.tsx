@@ -23,6 +23,8 @@ export default function NewSchedulePage() {
 
   const [formData, setFormData] = useState({
     date: initialDate,
+    endDate: '', // 複数日予定の終了日
+    isMultiDay: false, // 複数日予定かどうか
     title: '',
     category: 'remote' as ScheduleCategoryKey,
     memo: '',
@@ -35,6 +37,24 @@ export default function NewSchedulePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // 複数日予定のチェック変更時
+  const handleMultiDayChange = (checked: boolean) => {
+    if (checked) {
+      setFormData({
+        ...formData,
+        isMultiDay: true,
+        isAllDay: true, // 強制的に終日に
+        endDate: formData.date // デフォルトは開始日と同じ
+      });
+    } else {
+      setFormData({
+        ...formData,
+        isMultiDay: false,
+        endDate: ''
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -44,7 +64,14 @@ export default function NewSchedulePage() {
       // タイトルが空の場合はカテゴリ名を使用
       const title = formData.title.trim() || categories[formData.category];
 
-      await addSchedule({
+      // バリデーション：複数日予定の場合、終了日が開始日以降であること
+      if (formData.isMultiDay && formData.endDate && formData.endDate < formData.date) {
+        setError('終了日は開始日以降の日付を指定してください');
+        setLoading(false);
+        return;
+      }
+
+      const scheduleData: any = {
         date: formData.date,
         title,
         category: formData.category,
@@ -56,7 +83,14 @@ export default function NewSchedulePage() {
         repeat: {
           pattern: 'none',
         },
-      });
+      };
+
+      // 複数日予定の場合のみendDateを追加
+      if (formData.isMultiDay && formData.endDate) {
+        scheduleData.endDate = formData.endDate;
+      }
+
+      await addSchedule(scheduleData);
 
       router.push('/calendar');
     } catch (err) {
@@ -132,9 +166,23 @@ export default function NewSchedulePage() {
                 type="checkbox"
                 checked={formData.isAllDay}
                 onChange={(e) => setFormData({ ...formData, isAllDay: e.target.checked })}
+                disabled={formData.isMultiDay}
                 className="w-4 h-4"
               />
-              <span className="text-sm font-medium text-gray-700">終日</span>
+              <span className="text-sm font-medium text-gray-700">
+                終日
+                {formData.isMultiDay && ' (複数日予定は終日のみ)'}
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.isMultiDay}
+                onChange={(e) => handleMultiDayChange(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium text-gray-700">複数日にまたがる予定</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -147,6 +195,30 @@ export default function NewSchedulePage() {
               <span className="text-sm font-medium text-gray-700">共通の予定（2人で編集可能）</span>
             </label>
           </div>
+
+          {formData.isMultiDay && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                終了日 *
+              </label>
+              <DatePicker
+                selected={formData.endDate ? parse(formData.endDate, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => {
+                  if (date) {
+                    setFormData({ ...formData, endDate: format(date, 'yyyy-MM-dd') });
+                  }
+                }}
+                onChangeRaw={(e) => e?.preventDefault()}
+                onFocus={(e) => (e.target as HTMLInputElement).blur()}
+                minDate={parse(formData.date, 'yyyy-MM-dd', new Date())}
+                dateFormat="yyyy/MM/dd"
+                locale={ja}
+                className="input w-full"
+                placeholderText="終了日を選択"
+                required
+              />
+            </div>
+          )}
 
           {!formData.isAllDay && (
             <div className="grid grid-cols-2 gap-4">

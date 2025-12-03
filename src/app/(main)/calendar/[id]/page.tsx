@@ -15,6 +15,7 @@ import { toast } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Loading from '@/components/ui/Loading';
 import { showErrorToast } from '@/utils/errorHandling';
+import { getScheduleDurationDays } from '@/utils/scheduleHelpers';
 
 export default function ScheduleDetailPage() {
   const router = useRouter();
@@ -120,7 +121,18 @@ export default function ScheduleDetailPage() {
               <p className="text-sm text-gray-600">日付</p>
               <p className="text-lg font-semibold">
                 {format(new Date(schedule.date), 'M月d日(E)', { locale: ja })}
+                {schedule.endDate && (
+                  <>
+                    {' '}〜{' '}
+                    {format(new Date(schedule.endDate), 'M月d日(E)', { locale: ja })}
+                  </>
+                )}
               </p>
+              {schedule.endDate && (
+                <p className="text-sm text-gray-500 mt-1">
+                  {getScheduleDurationDays(schedule)}日間
+                </p>
+              )}
             </div>
           </div>
 

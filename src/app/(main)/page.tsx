@@ -17,7 +17,7 @@ import { extractVariable, replaceVariable, Variable } from '@/utils/templateVari
 import NumberInputModal from '@/components/NumberInputModal';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast } from '@/utils/errorHandling';
-import { getTodayDateString, sortSchedulesByTime } from '@/utils/scheduleHelpers';
+import { getTodayDateString, sortSchedulesByTime, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
 import { hasId } from '@/utils/typeGuards';
 import { MESSAGE } from '@/constants/app';
 
@@ -231,6 +231,11 @@ export default function HomePage() {
             {todaySchedules.map((schedule) => {
               const isMine = schedule.userId === user?.uid;
               const isShared = schedule.isShared;
+              const isMultiDay = isMultiDaySchedule(schedule);
+              const dayInfo = isMultiDay
+                ? `${getScheduleDayNumber(schedule, new Date())}日目/${getScheduleDurationDays(schedule)}日間`
+                : null;
+
               return (
                 <div
                   key={schedule.id}
@@ -253,6 +258,7 @@ export default function HomePage() {
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
                         {categories[schedule.category]}
+                        {isMultiDay && ` • ${dayInfo}`}
                         {!schedule.isAllDay && schedule.startTime && (
                           <>
                             {` • ${schedule.startTime}`}

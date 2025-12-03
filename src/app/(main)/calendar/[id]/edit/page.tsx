@@ -24,6 +24,8 @@ export default function EditSchedulePage() {
 
   const [formData, setFormData] = useState({
     date: '',
+    endDate: '', // 複数日予定の終了日
+    isMultiDay: false, // 複数日予定かどうか
     title: '',
     category: 'remote' as ScheduleCategoryKey,
     memo: '',
@@ -36,6 +38,24 @@ export default function EditSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // 複数日予定のチェック変更時
+  const handleMultiDayChange = (checked: boolean) => {
+    if (checked) {
+      setFormData({
+        ...formData,
+        isMultiDay: true,
+        isAllDay: true, // 強制的に終日に
+        endDate: formData.date // デフォルトは開始日と同じ
+      });
+    } else {
+      setFormData({
+        ...formData,
+        isMultiDay: false,
+        endDate: ''
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -61,6 +81,8 @@ export default function EditSchedulePage() {
 
           setFormData({
             date: schedule.date,
+            endDate: schedule.endDate || '',
+            isMultiDay: !!schedule.endDate && schedule.endDate > schedule.date,
             title: schedule.title,
             category: schedule.category,
             memo: schedule.memo || '',
@@ -94,10 +116,17 @@ export default function EditSchedulePage() {
         throw new Error('Pair ID not found');
       }
 
+      // バリデーション：複数日予定の場合、終了日が開始日以降であること
+      if (formData.isMultiDay && formData.endDate && formData.endDate < formData.date) {
+        setError('終了日は開始日以降の日付を指定してください');
+        setSaving(false);
+        return;
+      }
+
       // タイトルが空の場合はカテゴリ名を使用
       const title = formData.title.trim() || categories[formData.category];
 
-      await updateDoc(doc(db, 'pairs', userProfile.pairId, 'schedules', scheduleId), {
+      const updateData: any = {
         date: formData.date,
         title,
         category: formData.category,
@@ -107,7 +136,16 @@ export default function EditSchedulePage() {
         endTime: formData.isAllDay ? null : formData.endTime,
         isShared: formData.isShared,
         updatedAt: Timestamp.now(),
-      });
+      };
+
+      // 複数日予定の場合はendDateを追加、そうでない場合はnullで削除
+      if (formData.isMultiDay && formData.endDate) {
+        updateData.endDate = formData.endDate;
+      } else {
+        updateData.endDate = null;
+      }
+
+      await updateDoc(doc(db, 'pairs', userProfile.pairId, 'schedules', scheduleId), updateData);
 
       router.push(`/calendar/${scheduleId}`);
     } catch (err) {
@@ -191,9 +229,23 @@ export default function EditSchedulePage() {
                 type="checkbox"
                 checked={formData.isAllDay}
                 onChange={(e) => setFormData({ ...formData, isAllDay: e.target.checked })}
+                disabled={formData.isMultiDay}
                 className="w-4 h-4"
               />
-              <span className="text-sm font-medium text-gray-700">終日</span>
+              <span className="text-sm font-medium text-gray-700">
+                終日
+                {formData.isMultiDay && ' (複数日予定は終日のみ)'}
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.isMultiDay}
+                onChange={(e) => handleMultiDayChange(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium text-gray-700">複数日にまたがる予定</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -206,6 +258,30 @@ export default function EditSchedulePage() {
               <span className="text-sm font-medium text-gray-700">共通の予定（2人で編集可能）</span>
             </label>
           </div>
+
+          {formData.isMultiDay && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                終了日 *
+              </label>
+              <DatePicker
+                selected={formData.endDate ? parse(formData.endDate, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => {
+                  if (date) {
+                    setFormData({ ...formData, endDate: format(date, 'yyyy-MM-dd') });
+                  }
+                }}
+                onChangeRaw={(e) => e?.preventDefault()}
+                onFocus={(e) => (e.target as HTMLInputElement).blur()}
+                minDate={parse(formData.date, 'yyyy-MM-dd', new Date())}
+                dateFormat="yyyy/MM/dd"
+                locale={ja}
+                className="input w-full"
+                placeholderText="終了日を選択"
+                required
+              />
+            </div>
+          )}
 
           {!formData.isAllDay && (
             <div className="grid grid-cols-2 gap-4">

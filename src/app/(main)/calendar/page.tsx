@@ -9,7 +9,7 @@ import { useSchedules } from '@/hooks/useSchedules';
 import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { getSchedulesForDate } from '@/utils/scheduleHelpers';
+import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
 import Loading from '@/components/ui/Loading';
 import { CALENDAR } from '@/constants/app';
 
@@ -171,6 +171,25 @@ export default function CalendarPage() {
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
                         const isShared = schedule.isShared;
+                        const isMultiDay = isMultiDaySchedule(schedule);
+
+                        let dayIndicator = '';
+                        let dayInfo = '';
+
+                        if (isMultiDay) {
+                          const dayNum = getScheduleDayNumber(schedule, day);
+                          const duration = getScheduleDurationDays(schedule);
+
+                          if (dayNum === 1) {
+                            dayIndicator = '◀';
+                          } else if (dayNum === duration) {
+                            dayIndicator = '▶';
+                          } else {
+                            dayIndicator = '━';
+                          }
+
+                          dayInfo = `${dayNum}日目/${duration}日間`;
+                        }
 
                         return (
                           <Link
@@ -184,6 +203,11 @@ export default function CalendarPage() {
                                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
                             }`}
                           >
+                            {isMultiDay && (
+                              <div className="text-xs text-gray-500 mb-0.5">
+                                {dayIndicator} {dayInfo}
+                              </div>
+                            )}
                             <div className={`font-semibold mb-0.5 ${
                               isShared
                                 ? 'text-blue-900'
@@ -256,6 +280,25 @@ export default function CalendarPage() {
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
                         const isShared = schedule.isShared;
+                        const isMultiDay = isMultiDaySchedule(schedule);
+
+                        let dayIndicator = '';
+                        let dayInfo = '';
+
+                        if (isMultiDay) {
+                          const dayNum = getScheduleDayNumber(schedule, day);
+                          const duration = getScheduleDurationDays(schedule);
+
+                          if (dayNum === 1) {
+                            dayIndicator = '◀';
+                          } else if (dayNum === duration) {
+                            dayIndicator = '▶';
+                          } else {
+                            dayIndicator = '━';
+                          }
+
+                          dayInfo = `${dayNum}/${duration}日`;
+                        }
 
                         return (
                           <Link
@@ -268,8 +311,9 @@ export default function CalendarPage() {
                                 ? 'bg-pink-200 text-pink-900 hover:bg-pink-300'
                                 : 'bg-purple-200 text-purple-900 hover:bg-purple-300'
                             }`}
-                            title={`${schedule.title}${schedule.startTime ? ` ${schedule.startTime}` : ''}${isShared ? ' (共通)' : ''}`}
+                            title={`${schedule.title}${isMultiDay ? ` (${dayInfo})` : ''}${schedule.startTime ? ` ${schedule.startTime}` : ''}${isShared ? ' (共通)' : ''}`}
                           >
+                            {isMultiDay && <span className="mr-1">{dayIndicator}</span>}
                             {schedule.startTime && <span className="font-semibold">{schedule.startTime.substring(0, 5)} </span>}
                             {schedule.title}
                             {isShared && ' ⭐'}

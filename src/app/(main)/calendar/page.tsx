@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePair } from '@/hooks/usePair';
 import { useSchedules } from '@/hooks/useSchedules';
 import { SCHEDULE_CATEGORIES } from '@/types';
-import { format, addDays, isSameDay, startOfDay } from 'date-fns';
+import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate } from '@/utils/scheduleHelpers';
 import Loading from '@/components/ui/Loading';
@@ -76,8 +76,19 @@ export default function CalendarPage() {
     return viewMode === '2weeks' ? CALENDAR.TWO_WEEKS_DAYS : CALENDAR.MONTH_DAYS;
   };
 
+  // viewModeに応じて実際の開始日を計算
+  const getActualStartDate = () => {
+    if (viewMode === 'month') {
+      // 4週間表示の場合は、今週の日曜日を開始日とする
+      return startOfWeek(startDate, { weekStartsOn: 0 });
+    }
+    // 2週間表示の場合は、startDateをそのまま使用
+    return startDate;
+  };
+
+  const actualStartDate = getActualStartDate();
   const daysCount = getDaysCount();
-  const weekDays = Array.from({ length: daysCount }, (_, i) => addDays(startDate, i));
+  const weekDays = Array.from({ length: daysCount }, (_, i) => addDays(actualStartDate, i));
 
   return (
     <div className="max-w-6xl mx-auto p-4 pb-24">
@@ -101,7 +112,7 @@ export default function CalendarPage() {
             ← 前
           </button>
           <h2 className="text-sm md:text-lg font-semibold flex-1 text-center">
-            {format(startDate, 'M/d', { locale: ja })} - {format(addDays(startDate, daysCount - 1), 'M/d', { locale: ja })}
+            {format(actualStartDate, 'M/d', { locale: ja })} - {format(addDays(actualStartDate, daysCount - 1), 'M/d', { locale: ja })}
           </h2>
           <button
             onClick={() => setStartDate(addDays(startDate, daysCount))}
@@ -197,7 +208,7 @@ export default function CalendarPage() {
             })}
           </div>
         ) : (
-          // 1ヶ月表示：カレンダーグリッド
+          // 4週間表示：カレンダーグリッド
           <div>
             {/* 曜日ヘッダー */}
             <div className="grid grid-cols-7 gap-1 mb-1">
@@ -277,7 +288,16 @@ export default function CalendarPage() {
       {/* 今日に戻るボタン */}
       <div className="flex justify-center">
         <button
-          onClick={() => setStartDate(startOfDay(new Date()))}
+          onClick={() => {
+            const today = startOfDay(new Date());
+            if (viewMode === 'month') {
+              // 4週間表示の場合は、今週の日曜日に戻る
+              setStartDate(startOfWeek(today, { weekStartsOn: 0 }));
+            } else {
+              // 2週間表示の場合は、今日に戻る
+              setStartDate(today);
+            }
+          }}
           className="btn btn-secondary"
         >
           📅 今日に戻る

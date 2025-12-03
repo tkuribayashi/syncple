@@ -7,9 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePair } from '@/hooks/usePair';
 import { useSchedules } from '@/hooks/useSchedules';
 import { SCHEDULE_CATEGORIES } from '@/types';
-import { format, addDays, isSameDay, startOfDay } from 'date-fns';
+import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { getSchedulesForDate } from '@/utils/scheduleHelpers';
+import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
 import Loading from '@/components/ui/Loading';
 import { CALENDAR } from '@/constants/app';
 
@@ -76,8 +76,19 @@ export default function CalendarPage() {
     return viewMode === '2weeks' ? CALENDAR.TWO_WEEKS_DAYS : CALENDAR.MONTH_DAYS;
   };
 
+  // viewModeに応じて実際の開始日を計算
+  const getActualStartDate = () => {
+    if (viewMode === 'month') {
+      // 4週間表示の場合は、今週の日曜日を開始日とする
+      return startOfWeek(startDate, { weekStartsOn: 0 });
+    }
+    // 2週間表示の場合は、startDateをそのまま使用
+    return startDate;
+  };
+
+  const actualStartDate = getActualStartDate();
   const daysCount = getDaysCount();
-  const weekDays = Array.from({ length: daysCount }, (_, i) => addDays(startDate, i));
+  const weekDays = Array.from({ length: daysCount }, (_, i) => addDays(actualStartDate, i));
 
   return (
     <div className="max-w-6xl mx-auto p-4 pb-24">
@@ -101,7 +112,7 @@ export default function CalendarPage() {
             ← 前
           </button>
           <h2 className="text-sm md:text-lg font-semibold flex-1 text-center">
-            {format(startDate, 'M/d', { locale: ja })} - {format(addDays(startDate, daysCount - 1), 'M/d', { locale: ja })}
+            {format(actualStartDate, 'M/d', { locale: ja })} - {format(addDays(actualStartDate, daysCount - 1), 'M/d', { locale: ja })}
           </h2>
           <button
             onClick={() => setStartDate(addDays(startDate, daysCount))}
@@ -160,6 +171,25 @@ export default function CalendarPage() {
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
                         const isShared = schedule.isShared;
+                        const isMultiDay = isMultiDaySchedule(schedule);
+
+                        let dayIndicator = '';
+                        let dayInfo = '';
+
+                        if (isMultiDay) {
+                          const dayNum = getScheduleDayNumber(schedule, day);
+                          const duration = getScheduleDurationDays(schedule);
+
+                          if (dayNum === 1) {
+                            dayIndicator = '◀';
+                          } else if (dayNum === duration) {
+                            dayIndicator = '▶';
+                          } else {
+                            dayIndicator = '━';
+                          }
+
+                          dayInfo = `${dayNum}日目/${duration}日間`;
+                        }
 
                         return (
                           <Link
@@ -173,6 +203,11 @@ export default function CalendarPage() {
                                 : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
                             }`}
                           >
+                            {isMultiDay && (
+                              <div className="text-xs text-gray-500 mb-0.5">
+                                {dayIndicator} {dayInfo}
+                              </div>
+                            )}
                             <div className={`font-semibold mb-0.5 ${
                               isShared
                                 ? 'text-blue-900'
@@ -197,7 +232,7 @@ export default function CalendarPage() {
             })}
           </div>
         ) : (
-          // 1ヶ月表示：カレンダーグリッド
+          // 4週間表示：カレンダーグリッド
           <div>
             {/* 曜日ヘッダー */}
             <div className="grid grid-cols-7 gap-1 mb-1">
@@ -245,6 +280,25 @@ export default function CalendarPage() {
                       {daySchedules.map((schedule) => {
                         const isOwnSchedule = schedule.userId === user?.uid;
                         const isShared = schedule.isShared;
+                        const isMultiDay = isMultiDaySchedule(schedule);
+
+                        let dayIndicator = '';
+                        let dayInfo = '';
+
+                        if (isMultiDay) {
+                          const dayNum = getScheduleDayNumber(schedule, day);
+                          const duration = getScheduleDurationDays(schedule);
+
+                          if (dayNum === 1) {
+                            dayIndicator = '◀';
+                          } else if (dayNum === duration) {
+                            dayIndicator = '▶';
+                          } else {
+                            dayIndicator = '━';
+                          }
+
+                          dayInfo = `${dayNum}/${duration}日`;
+                        }
 
                         return (
                           <Link
@@ -257,8 +311,9 @@ export default function CalendarPage() {
                                 ? 'bg-pink-200 text-pink-900 hover:bg-pink-300'
                                 : 'bg-purple-200 text-purple-900 hover:bg-purple-300'
                             }`}
-                            title={`${schedule.title}${schedule.startTime ? ` ${schedule.startTime}` : ''}${isShared ? ' (共通)' : ''}`}
+                            title={`${schedule.title}${isMultiDay ? ` (${dayInfo})` : ''}${schedule.startTime ? ` ${schedule.startTime}` : ''}${isShared ? ' (共通)' : ''}`}
                           >
+                            {isMultiDay && <span className="mr-1">{dayIndicator}</span>}
                             {schedule.startTime && <span className="font-semibold">{schedule.startTime.substring(0, 5)} </span>}
                             {schedule.title}
                             {isShared && ' ⭐'}
@@ -277,7 +332,16 @@ export default function CalendarPage() {
       {/* 今日に戻るボタン */}
       <div className="flex justify-center">
         <button
-          onClick={() => setStartDate(startOfDay(new Date()))}
+          onClick={() => {
+            const today = startOfDay(new Date());
+            if (viewMode === 'month') {
+              // 4週間表示の場合は、今週の日曜日に戻る
+              setStartDate(startOfWeek(today, { weekStartsOn: 0 }));
+            } else {
+              // 2週間表示の場合は、今日に戻る
+              setStartDate(today);
+            }
+          }}
           className="btn btn-secondary"
         >
           📅 今日に戻る

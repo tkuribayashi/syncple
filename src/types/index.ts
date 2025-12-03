@@ -22,7 +22,8 @@ export interface Pair {
 export interface Schedule {
   id?: string;
   userId: string;
-  date: string; // "YYYY-MM-DD"
+  date: string; // 開始日 "YYYY-MM-DD"
+  endDate?: string; // 終了日 "YYYY-MM-DD" (オプショナル、複数日予定用)
   title: string;
   category: 'remote' | 'office' | 'business_trip' | 'vacation' | 'outing' | 'other';
   memo: string | null;

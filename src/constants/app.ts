@@ -30,6 +30,6 @@ export const QUICK_MESSAGE = {
 export const CALENDAR = {
   /** 2週間表示の日数 */
   TWO_WEEKS_DAYS: 14,
-  /** 月表示の日数 */
-  MONTH_DAYS: 30,
+  /** 月表示の日数（4週間） */
+  MONTH_DAYS: 28,
 } as const;

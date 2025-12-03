@@ -40,8 +40,8 @@ export default function CalendarViewSection({
             className="w-4 h-4"
           />
           <div className="flex-1">
-            <div className="font-medium text-gray-900">1ヶ月表示</div>
-            <div className="text-xs text-gray-500">30日分をカレンダーグリッドで表示</div>
+            <div className="font-medium text-gray-900">4週間表示</div>
+            <div className="text-xs text-gray-500">28日分をカレンダーグリッドで表示</div>
           </div>
         </label>
       </div>

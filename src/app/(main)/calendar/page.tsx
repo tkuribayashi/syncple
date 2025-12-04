@@ -262,7 +262,7 @@ export default function CalendarPage() {
                         ? 'bg-blue-50 border-gray-200'
                         : 'bg-white border-gray-200'
                     }`}
-                    onClick={() => router.push(`/calendar/new?date=${format(day, 'yyyy-MM-dd')}`)}
+                    onClick={() => router.push(`/calendar/date/${format(day, 'yyyy-MM-dd')}`)}
                   >
                     <div className={`text-sm font-bold mb-1 ${
                       isToday
@@ -303,7 +303,7 @@ export default function CalendarPage() {
                         return (
                           <Link
                             key={schedule.id}
-                            href={`/calendar/${schedule.id}`}
+                            href={`/calendar/date/${format(day, 'yyyy-MM-dd')}`}
                             className={`block text-xs px-1 py-0.5 rounded truncate ${
                               isShared
                                 ? 'bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-900 hover:from-blue-300 hover:to-cyan-300'

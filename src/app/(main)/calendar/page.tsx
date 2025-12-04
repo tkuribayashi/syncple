@@ -10,6 +10,7 @@ import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
+import { isJapaneseHoliday } from '@/utils/holidayHelpers';
 import Loading from '@/components/ui/Loading';
 import { CALENDAR } from '@/constants/app';
 
@@ -131,6 +132,7 @@ export default function CalendarPage() {
               const daySchedules = getSchedulesForDate(schedules, day);
               const isToday = isSameDay(day, new Date());
               const dayOfWeek = day.getDay();
+              const isHoliday = isJapaneseHoliday(day);
 
               return (
                 <div
@@ -145,7 +147,7 @@ export default function CalendarPage() {
                     <div className={`text-lg font-bold ${
                       isToday
                         ? 'text-pink-500'
-                        : dayOfWeek === 0
+                        : isHoliday || dayOfWeek === 0
                         ? 'text-red-600'
                         : dayOfWeek === 6
                         ? 'text-blue-600'
@@ -249,6 +251,7 @@ export default function CalendarPage() {
                 const daySchedules = getSchedulesForDate(schedules, day);
                 const isToday = isSameDay(day, new Date());
                 const dayOfWeek = day.getDay();
+                const isHoliday = isJapaneseHoliday(day);
 
                 return (
                   <div
@@ -256,6 +259,8 @@ export default function CalendarPage() {
                     className={`border rounded-lg p-1.5 min-h-[80px] cursor-pointer hover:bg-gray-50 ${
                       isToday
                         ? 'bg-pink-50 border-pink-400 border-2'
+                        : isHoliday
+                        ? 'bg-red-50 border-gray-200'
                         : dayOfWeek === 0
                         ? 'bg-red-50 border-gray-200'
                         : dayOfWeek === 6
@@ -267,7 +272,7 @@ export default function CalendarPage() {
                     <div className={`text-sm font-bold mb-1 ${
                       isToday
                         ? 'text-pink-500'
-                        : dayOfWeek === 0
+                        : isHoliday || dayOfWeek === 0
                         ? 'text-red-600'
                         : dayOfWeek === 6
                         ? 'text-blue-600'

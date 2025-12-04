@@ -10,6 +10,7 @@ import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
+import { isJapaneseHoliday } from '@/utils/holidayHelpers';
 import Loading from '@/components/ui/Loading';
 import { CALENDAR } from '@/constants/app';
 
@@ -131,6 +132,7 @@ export default function CalendarPage() {
               const daySchedules = getSchedulesForDate(schedules, day);
               const isToday = isSameDay(day, new Date());
               const dayOfWeek = day.getDay();
+              const isHoliday = isJapaneseHoliday(day);
 
               return (
                 <div
@@ -145,7 +147,7 @@ export default function CalendarPage() {
                     <div className={`text-lg font-bold ${
                       isToday
                         ? 'text-pink-500'
-                        : dayOfWeek === 0
+                        : isHoliday || dayOfWeek === 0
                         ? 'text-red-600'
                         : dayOfWeek === 6
                         ? 'text-blue-600'
@@ -249,6 +251,7 @@ export default function CalendarPage() {
                 const daySchedules = getSchedulesForDate(schedules, day);
                 const isToday = isSameDay(day, new Date());
                 const dayOfWeek = day.getDay();
+                const isHoliday = isJapaneseHoliday(day);
 
                 return (
                   <div
@@ -256,18 +259,20 @@ export default function CalendarPage() {
                     className={`border rounded-lg p-1.5 min-h-[80px] cursor-pointer hover:bg-gray-50 ${
                       isToday
                         ? 'bg-pink-50 border-pink-400 border-2'
+                        : isHoliday
+                        ? 'bg-red-50 border-gray-200'
                         : dayOfWeek === 0
                         ? 'bg-red-50 border-gray-200'
                         : dayOfWeek === 6
                         ? 'bg-blue-50 border-gray-200'
                         : 'bg-white border-gray-200'
                     }`}
-                    onClick={() => router.push(`/calendar/new?date=${format(day, 'yyyy-MM-dd')}`)}
+                    onClick={() => router.push(`/calendar/date/${format(day, 'yyyy-MM-dd')}`)}
                   >
                     <div className={`text-sm font-bold mb-1 ${
                       isToday
                         ? 'text-pink-500'
-                        : dayOfWeek === 0
+                        : isHoliday || dayOfWeek === 0
                         ? 'text-red-600'
                         : dayOfWeek === 6
                         ? 'text-blue-600'
@@ -303,7 +308,7 @@ export default function CalendarPage() {
                         return (
                           <Link
                             key={schedule.id}
-                            href={`/calendar/${schedule.id}`}
+                            href={`/calendar/date/${format(day, 'yyyy-MM-dd')}`}
                             className={`block text-xs px-1 py-0.5 rounded truncate ${
                               isShared
                                 ? 'bg-gradient-to-r from-blue-200 to-cyan-200 text-blue-900 hover:from-blue-300 hover:to-cyan-300'

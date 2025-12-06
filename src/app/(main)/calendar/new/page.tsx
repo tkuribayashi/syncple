@@ -26,13 +26,20 @@ export default function NewSchedulePage() {
     endDate: '', // 複数日予定の終了日
     isMultiDay: false, // 複数日予定かどうか
     title: '',
-    category: 'remote' as ScheduleCategoryKey,
+    category: null as ScheduleCategoryKey | null, // 初期値はnull、後でuseEffectで設定
     memo: '',
     isAllDay: true,
     startTime: '09:00',
     endTime: '',
     isShared: false,
   });
+
+  // カテゴリの初期値を設定
+  useEffect(() => {
+    if (categoryOrder.length > 0 && formData.category === null) {
+      setFormData(prev => ({ ...prev, category: categoryOrder[0] }));
+    }
+  }, [categoryOrder, formData.category]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -61,8 +68,8 @@ export default function NewSchedulePage() {
     setLoading(true);
 
     try {
-      // タイトルが空の場合はカテゴリ名を使用
-      const title = formData.title.trim() || categories[formData.category];
+      // タイトルが空の場合はカテゴリ名を使用（カテゴリがある場合）
+      const title = formData.title.trim() || (formData.category && categories[formData.category]) || '予定';
 
       // バリデーション：複数日予定の場合、終了日が開始日以降であること
       if (formData.isMultiDay && formData.endDate && formData.endDate < formData.date) {
@@ -141,24 +148,26 @@ export default function NewSchedulePage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-              カテゴリ *
-            </label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value as ScheduleCategoryKey })}
-              className="input w-full"
-              required
-            >
-              {categoryOrder.map((key) => (
-                <option key={key} value={key}>
-                  {categories[key]}
-                </option>
-              ))}
-            </select>
-          </div>
+          {categoryOrder.length > 0 && (
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                カテゴリ
+              </label>
+              <select
+                id="category"
+                value={formData.category || ''}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value || null })}
+                className="input w-full"
+              >
+                <option value="">カテゴリなし</option>
+                {categoryOrder.map((key) => (
+                  <option key={key} value={key}>
+                    {categories[key]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="flex items-center gap-2">

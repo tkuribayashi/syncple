@@ -33,3 +33,23 @@ export const CALENDAR = {
   /** 月表示の日数（4週間） */
   MONTH_DAYS: 28,
 } as const;
+
+/**
+ * 予定カテゴリ関連の定数
+ */
+export const SCHEDULE_CATEGORY = {
+  /** 予定カテゴリの最大数 */
+  MAX: 12,
+  /** 予定カテゴリの最小数（0も許容） */
+  MIN: 0,
+} as const;
+
+/**
+ * 晩ご飯ステータス関連の定数
+ */
+export const DINNER_STATUS = {
+  /** 晩ご飯ステータスの最大数 */
+  MAX: 12,
+  /** 晩ご飯ステータスの最小数（0も許容） */
+  MIN: 0,
+} as const;

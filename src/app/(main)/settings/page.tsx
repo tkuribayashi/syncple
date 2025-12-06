@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
-import { useDinnerStatusOptions, DinnerStatusMap } from '@/hooks/useDinnerStatusOptions';
-import { DinnerStatusType } from '@/types';
+import { useDinnerStatusOptions, DinnerStatusMap, DinnerStatusKey } from '@/hooks/useDinnerStatusOptions';
 import QuickMessagesSection from './components/QuickMessagesSection';
 import ScheduleCategoriesSection from './components/ScheduleCategoriesSection';
 import DinnerStatusSection from './components/DinnerStatusSection';
@@ -18,8 +17,26 @@ type CalendarViewMode = '2weeks' | 'month';
 export default function SettingsPage() {
   const { signOut, userProfile, updateDisplayName, fcm } = useAuth();
   const { quickMessages: loadedMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
-  const { categories: loadedCategories, categoryOrder: loadedCategoryOrder, loading: loadingCategories, saveCategories, reorderCategories } = useScheduleCategories(userProfile?.pairId || null);
-  const { statuses: loadedStatuses, statusOrder: loadedStatusOrder, loading: loadingStatuses, saveStatuses, reorderStatuses } = useDinnerStatusOptions(userProfile?.pairId || null);
+  const {
+    categories: loadedCategories,
+    categoryOrder: loadedCategoryOrder,
+    loading: loadingCategories,
+    saveCategories,
+    reorderCategories,
+    addCategory,
+    deleteCategory,
+    getCategoryUsageCount,
+  } = useScheduleCategories(userProfile?.pairId || null);
+  const {
+    statuses: loadedStatuses,
+    statusOrder: loadedStatusOrder,
+    loading: loadingStatuses,
+    saveStatuses,
+    reorderStatuses,
+    addStatus,
+    deleteStatus,
+    getStatusUsageCount,
+  } = useDinnerStatusOptions(userProfile?.pairId || null);
   const [quickMessages, setQuickMessages] = useState<string[]>([]);
   const [categories, setCategories] = useState<ScheduleCategoryMap>({
     remote: '',
@@ -43,7 +60,7 @@ export default function SettingsPage() {
     cooking_together: '',
     undecided: '',
   });
-  const [statusOrder, setStatusOrder] = useState<DinnerStatusType[]>([
+  const [statusOrder, setStatusOrder] = useState<DinnerStatusKey[]>([
     'alone',
     'cooking',
     'cooking_together',
@@ -114,6 +131,9 @@ export default function SettingsPage() {
         setCategoryOrder={setCategoryOrder}
         saveCategories={saveCategories}
         reorderCategories={reorderCategories}
+        addCategory={addCategory}
+        deleteCategory={deleteCategory}
+        getCategoryUsageCount={getCategoryUsageCount}
         saving={saving}
         setSaving={setSaving}
       />
@@ -126,6 +146,9 @@ export default function SettingsPage() {
         setStatusOrder={setStatusOrder}
         saveStatuses={saveStatuses}
         reorderStatuses={reorderStatuses}
+        addStatus={addStatus}
+        deleteStatus={deleteStatus}
+        getStatusUsageCount={getStatusUsageCount}
         saving={saving}
         setSaving={setSaving}
       />

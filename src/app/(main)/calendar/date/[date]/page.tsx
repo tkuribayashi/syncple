@@ -122,9 +122,11 @@ export default function DailyDetailPage() {
 
                 {/* カテゴリとオーナー */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    {categories[schedule.category]}
-                  </span>
+                  {schedule.category && (
+                    <span className="bg-gray-100 px-2 py-1 rounded">
+                      {categories[schedule.category] || schedule.category}
+                    </span>
+                  )}
                   <span>
                     {isShared ? '共通の予定' : ownerName}
                   </span>

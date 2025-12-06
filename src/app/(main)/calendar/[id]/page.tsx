@@ -136,15 +136,17 @@ export default function ScheduleDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">🏷️</div>
-            <div>
-              <p className="text-sm text-gray-600">カテゴリー</p>
-              <p className="text-lg font-semibold">
-                {categories[schedule.category]}
-              </p>
+          {schedule.category && (
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">🏷️</div>
+              <div>
+                <p className="text-sm text-gray-600">カテゴリー</p>
+                <p className="text-lg font-semibold">
+                  {categories[schedule.category] || schedule.category}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {!schedule.isAllDay && schedule.startTime && (
             <div className="flex items-center gap-3">

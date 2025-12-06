@@ -257,7 +257,7 @@ export default function HomePage() {
                         {isShared && ' ⭐'}
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
-                        {categories[schedule.category]}
+                        {schedule.category ? categories[schedule.category] || schedule.category : ''}
                         {isMultiDay && ` • ${dayInfo}`}
                         {!schedule.isAllDay && schedule.startTime && (
                           <>

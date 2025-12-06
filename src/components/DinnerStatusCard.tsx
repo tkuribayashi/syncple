@@ -2,7 +2,6 @@
 
 import { useDinnerStatus } from '@/hooks/useDinnerStatus';
 import { useDinnerStatusOptions } from '@/hooks/useDinnerStatusOptions';
-import { DinnerStatusType } from '@/types';
 import { usePair } from '@/hooks/usePair';
 
 interface DinnerStatusCardProps {

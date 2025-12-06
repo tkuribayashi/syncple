@@ -25,7 +25,7 @@ export interface Schedule {
   date: string; // 開始日 "YYYY-MM-DD"
   endDate?: string; // 終了日 "YYYY-MM-DD" (オプショナル、複数日予定用)
   title: string;
-  category: 'remote' | 'office' | 'business_trip' | 'vacation' | 'outing' | 'other';
+  category: string | null; // カスタムカテゴリ対応、nullはカテゴリなし
   memo: string | null;
   isAllDay: boolean;
   startTime: string | null; // "HH:mm"
@@ -76,7 +76,7 @@ export interface DinnerStatus {
   id?: string;
   userId: string;
   date: string; // "YYYY-MM-DD"
-  status: 'alone' | 'cooking' | 'cooking_together' | 'undecided';
+  status: string | null; // カスタムステータス対応、nullはステータスなし
   updatedAt: Timestamp;
 }
 
@@ -88,6 +88,16 @@ export const SCHEDULE_CATEGORIES = {
   outing: '外出',
   other: 'その他',
 } as const;
+
+// 予定カテゴリのデフォルトキー
+export const DEFAULT_SCHEDULE_CATEGORY_KEYS = [
+  'remote',
+  'office',
+  'business_trip',
+  'vacation',
+  'outing',
+  'other',
+] as const;
 
 export const USER_STATUSES = {
   available: '手が空いてる',
@@ -112,5 +122,13 @@ export const DINNER_STATUSES = {
   cooking_together: '一緒に作る',
   undecided: '未定',
 } as const;
+
+// 晩ご飯ステータスのデフォルトキー
+export const DEFAULT_DINNER_STATUS_KEYS = [
+  'alone',
+  'cooking',
+  'cooking_together',
+  'undecided',
+] as const;
 
 export type DinnerStatusType = keyof typeof DINNER_STATUSES;

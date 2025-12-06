@@ -11,7 +11,7 @@ import {
   where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DinnerStatus, DinnerStatusType } from '@/types';
+import { DinnerStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 
@@ -52,7 +52,7 @@ export function useDinnerStatus(pairId: string | null) {
     return unsubscribe;
   }, [pairId, user, today]);
 
-  const updateStatus = async (status: DinnerStatusType) => {
+  const updateStatus = async (status: string) => {
     if (!pairId || !user) throw new Error('Pair ID or user not found');
 
     const docId = `${user.uid}_${today}`;

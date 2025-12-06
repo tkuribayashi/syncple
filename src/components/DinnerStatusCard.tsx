@@ -2,7 +2,6 @@
 
 import { useDinnerStatus } from '@/hooks/useDinnerStatus';
 import { useDinnerStatusOptions } from '@/hooks/useDinnerStatusOptions';
-import { DinnerStatusType } from '@/types';
 import { usePair } from '@/hooks/usePair';
 
 interface DinnerStatusCardProps {
@@ -53,7 +52,7 @@ export default function DinnerStatusCard({ pairId }: DinnerStatusCardProps) {
         <p className="text-sm font-medium text-gray-700 mb-2">
           {partner?.displayName || 'パートナー'}
         </p>
-        {partnerStatus ? (
+        {partnerStatus?.status ? (
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
             <span className="text-lg font-semibold text-purple-900">
               {statuses[partnerStatus.status]}

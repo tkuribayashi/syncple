@@ -27,7 +27,7 @@ export default function EditSchedulePage() {
     endDate: '', // 複数日予定の終了日
     isMultiDay: false, // 複数日予定かどうか
     title: '',
-    category: 'remote' as ScheduleCategoryKey,
+    category: '' as string | null,
     memo: '',
     isAllDay: true,
     startTime: '09:00',
@@ -123,8 +123,8 @@ export default function EditSchedulePage() {
         return;
       }
 
-      // タイトルが空の場合はカテゴリ名を使用
-      const title = formData.title.trim() || categories[formData.category];
+      // タイトルが空の場合はカテゴリ名を使用（カテゴリがある場合）
+      const title = formData.title.trim() || (formData.category && categories[formData.category]) || '予定';
 
       const updateData: any = {
         date: formData.date,
@@ -204,24 +204,26 @@ export default function EditSchedulePage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-              カテゴリ *
-            </label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value as ScheduleCategoryKey })}
-              className="input w-full"
-              required
-            >
-              {categoryOrder.map((key) => (
-                <option key={key} value={key}>
-                  {categories[key]}
-                </option>
-              ))}
-            </select>
-          </div>
+          {categoryOrder.length > 0 && (
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                カテゴリ
+              </label>
+              <select
+                id="category"
+                value={formData.category || ''}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value || null })}
+                className="input w-full"
+              >
+                <option value="">カテゴリなし</option>
+                {categoryOrder.map((key) => (
+                  <option key={key} value={key}>
+                    {categories[key]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="flex items-center gap-2">

@@ -7,11 +7,13 @@ service cloud.firestore {
       // 本人は読み書き可能
       allow write: if request.auth != null && request.auth.uid == userId;
 
-      // 本人、または認証済みユーザー（ペアのパートナー）は読み取り可能
-      // 注: 夫婦間アプリのため、認証済みユーザーに基本情報の閲覧を許可
-      // TODO: より厳格なセキュリティが必要な場合は、ペアのパートナーのみに限定する
-      //       (現状は実装の簡素化のため、認証済みユーザー全員に読み取り権限を付与)
-      allow read: if request.auth != null;
+      // 本人、またはペアのパートナーは読み取り可能
+      allow read: if request.auth != null &&
+        (request.auth.uid == userId ||  // 本人
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.pairId != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.pairId ==
+          get(/databases/$(database)/documents/users/$(userId)).data.pairId));  // ペアのパートナー
     }
 
     // ペアドキュメント: ペアのメンバーのみアクセス可能

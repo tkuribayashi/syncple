@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useScheduleCategories, ScheduleCategoryKey } from '@/hooks/useScheduleCategories';
+import { Schedule } from '@/types';
 import { format, parse } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
@@ -78,7 +79,7 @@ export default function NewSchedulePage() {
         return;
       }
 
-      const scheduleData: any = {
+      const scheduleData: Omit<Schedule, 'id' | 'userId' | 'createdAt' | 'updatedAt'> = {
         date: formData.date,
         title,
         category: formData.category,

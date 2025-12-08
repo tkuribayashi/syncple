@@ -9,13 +9,10 @@ import { useSchedules } from '@/hooks/useSchedules';
 import { useMessages } from '@/hooks/useMessages';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { useScheduleCategories } from '@/hooks/useScheduleCategories';
-import { USER_STATUSES } from '@/types';
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import DinnerStatusCard from '@/components/DinnerStatusCard';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
-import { toast } from '@/components/ui/Toast';
 import { showErrorToast } from '@/utils/errorHandling';
 import { getTodayDateString, sortSchedulesByTime, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
 import { hasId } from '@/utils/typeGuards';
@@ -24,7 +21,7 @@ import { MESSAGE } from '@/constants/app';
 export default function HomePage() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
-  const { pair, partner, loading: pairLoading } = usePair();
+  const { partner, loading: pairLoading } = usePair();
   const { schedules, loading: schedulesLoading } = useSchedules(userProfile?.pairId || null);
   const { messages, loading: messagesLoading, sendMessage, markAsRead, toggleReaction } = useMessages(userProfile?.pairId || null, MESSAGE.HOME_MESSAGE_LIMIT);
   const { quickMessages } = useQuickMessages(userProfile?.pairId || null);
@@ -146,7 +143,6 @@ export default function HomePage() {
             {messages.slice(-5).reverse().map((message) => {
               const isMyMessage = message.senderId === user?.uid;
               const hasReaction = message.reactions && Object.keys(message.reactions).length > 0;
-              const myReaction = message.reactions && user?.uid ? message.reactions[user.uid] : null;
 
               return (
                 <div

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteField, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useScheduleCategories, ScheduleCategoryKey } from '@/hooks/useScheduleCategories';
+import { useScheduleCategories } from '@/hooks/useScheduleCategories';
 import { Schedule } from '@/types';
 import { format, parse } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -13,7 +13,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { toast } from '@/components/ui/Toast';
 import Loading from '@/components/ui/Loading';
-import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
+import { showErrorToast } from '@/utils/errorHandling';
 
 export default function EditSchedulePage() {
   const router = useRouter();
@@ -126,7 +126,7 @@ export default function EditSchedulePage() {
       // タイトルが空の場合はカテゴリ名を使用（カテゴリがある場合）
       const title = formData.title.trim() || (formData.category && categories[formData.category]) || '予定';
 
-      const updateData: any = {
+      const updateData: Partial<Schedule> & { updatedAt: Timestamp } = {
         date: formData.date,
         title,
         category: formData.category,
@@ -138,11 +138,12 @@ export default function EditSchedulePage() {
         updatedAt: Timestamp.now(),
       };
 
-      // 複数日予定の場合はendDateを追加、そうでない場合はnullで削除
+      // 複数日予定の場合はendDateを追加、そうでない場合は削除
       if (formData.isMultiDay && formData.endDate) {
         updateData.endDate = formData.endDate;
       } else {
-        updateData.endDate = null;
+        // @ts-expect-error - deleteField()はFirestoreの特殊な値で、型システムでは表現できない
+        updateData.endDate = deleteField();
       }
 
       await updateDoc(doc(db, 'pairs', userProfile.pairId, 'schedules', scheduleId), updateData);

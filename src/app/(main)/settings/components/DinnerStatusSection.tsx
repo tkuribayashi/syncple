@@ -13,8 +13,6 @@ const EMPTY_STATUS_LABEL = 'ステータスなし';
 interface DinnerStatusSectionProps {
   dinnerStatuses: DinnerStatusMap;
   statusOrder: DinnerStatusKey[];
-  setDinnerStatuses: (statuses: DinnerStatusMap) => void;
-  setStatusOrder: (order: DinnerStatusKey[]) => void;
   saveStatuses: (statuses: DinnerStatusMap) => Promise<void>;
   reorderStatuses: (order: DinnerStatusKey[]) => Promise<void>;
   addStatus: (label: string) => Promise<DinnerStatusKey>;
@@ -27,8 +25,6 @@ interface DinnerStatusSectionProps {
 export default function DinnerStatusSection({
   dinnerStatuses,
   statusOrder,
-  setDinnerStatuses,
-  setStatusOrder,
   saveStatuses,
   reorderStatuses,
   addStatus,
@@ -48,30 +44,29 @@ export default function DinnerStatusSection({
     if (!newValue.trim()) return;
 
     const updated = { ...dinnerStatuses, [key]: newValue.trim() };
-    setDinnerStatuses(updated);
     setEditingStatus(null);
 
     setSaving(true);
     try {
       await saveStatuses(updated);
+      showSuccessToast('ステータスを保存しました');
     } catch (error) {
       showErrorToast(error, 'saveDinnerStatus');
+      setEditingStatus({ key, value: newValue });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReorderStatuses = async (reorderedItems: Array<{ id: string; content: any }>) => {
+  const handleReorderStatuses = async (reorderedItems: Array<{ id: string; content: React.ReactNode }>) => {
     const newOrder = reorderedItems.map((item) => item.id as DinnerStatusKey);
-
-    setStatusOrder(newOrder);
 
     setSaving(true);
     try {
       await reorderStatuses(newOrder);
+      showSuccessToast('並び替えを保存しました');
     } catch (error) {
       showErrorToast(error, 'reorderStatuses');
-      setStatusOrder([...statusOrder]);
     } finally {
       setSaving(false);
     }

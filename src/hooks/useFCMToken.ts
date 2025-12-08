@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getToken } from 'firebase/messaging';
-import { doc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, setDoc, arrayRemove } from 'firebase/firestore';
 import { getMessagingInstance } from '@/lib/firebase';
 import { db } from '@/lib/firebase';
 
@@ -135,8 +135,6 @@ export function useFCMToken(userId: string | null) {
         }, { merge: true }).catch(console.error);
       }
     };
-    // 空の依存配列にして、アンマウント時のみクリーンアップを実行
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

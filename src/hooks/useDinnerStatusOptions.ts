@@ -47,7 +47,8 @@ export function useDinnerStatusOptions(pairId: string | null) {
         } else {
           const data = statusesDoc.data();
           // _order と updatedAt を除外して、ステータスのみを抽出
-          const { _order, updatedAt, ...statusData } = data;
+           
+          const { _order, updatedAt: _updatedAt, ...statusData } = data;
 
           setStatuses(statusData as DinnerStatusMap);
 
@@ -149,6 +150,7 @@ export function useDinnerStatusOptions(pairId: string | null) {
     if (!pairId) throw new Error('Pair ID not found');
 
     // ステータスの削除
+     
     const { [key]: _, ...remainingStatuses } = statuses;
     const newOrder = statusOrder.filter((k) => k !== key);
 

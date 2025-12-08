@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePair } from '@/hooks/usePair';
 import { useSchedules } from '@/hooks/useSchedules';
-import { SCHEDULE_CATEGORIES } from '@/types';
 import { format, addDays, isSameDay, startOfDay, startOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
@@ -19,7 +17,6 @@ type ViewMode = '2weeks' | 'month';
 export default function CalendarPage() {
   const router = useRouter();
   const { user, userProfile } = useAuth();
-  const { partner } = usePair();
   const { schedules, loading } = useSchedules(userProfile?.pairId || null);
 
   // セッションストレージから日付を復元、なければ今日

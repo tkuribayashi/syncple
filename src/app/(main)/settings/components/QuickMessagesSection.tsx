@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import DraggableList from '@/components/DraggableList';
 import { toast } from '@/components/ui/Toast';
 import { showErrorToast, showSuccessToast } from '@/utils/errorHandling';
@@ -8,22 +8,26 @@ import { QUICK_MESSAGE } from '@/constants/app';
 
 interface QuickMessagesSectionProps {
   quickMessages: string[];
-  setQuickMessages: (messages: string[]) => void;
   saveQuickMessages: (messages: string[]) => Promise<void>;
   saving: boolean;
   setSaving: (saving: boolean) => void;
 }
 
 export default function QuickMessagesSection({
-  quickMessages,
-  setQuickMessages,
+  quickMessages: quickMessagesProp,
   saveQuickMessages,
   saving,
   setSaving,
 }: QuickMessagesSectionProps) {
+  const [quickMessages, setQuickMessages] = useState<string[]>(quickMessagesProp);
   const [editingMessage, setEditingMessage] = useState<{index: number, value: string, cursorPosition: number} | null>(null);
   const [defaultValueInput, setDefaultValueInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync local state with prop when it changes
+  useEffect(() => {
+    setQuickMessages(quickMessagesProp);
+  }, [quickMessagesProp]);
 
   const handleSaveMessage = async (index: number, newValue: string) => {
     if (!newValue.trim()) {
@@ -33,12 +37,12 @@ export default function QuickMessagesSection({
 
     const updated = [...quickMessages];
     updated[index] = newValue.trim();
-    setQuickMessages(updated);
     setEditingMessage(null);
 
     setSaving(true);
     try {
       await saveQuickMessages(updated);
+      showSuccessToast('メッセージを保存しました');
     } catch (error) {
       showErrorToast(error, 'saveQuickMessage');
       setEditingMessage({ index, value: newValue, cursorPosition: newValue.length });
@@ -97,7 +101,7 @@ export default function QuickMessagesSection({
     }
   };
 
-  const handleReorderMessages = async (reorderedItems: Array<{ id: string; content: any }>) => {
+  const handleReorderMessages = async (reorderedItems: Array<{ id: string; content: React.ReactNode }>) => {
     const oldMessages = [...quickMessages];
 
     const reorderedMessages = reorderedItems.map((item) => {

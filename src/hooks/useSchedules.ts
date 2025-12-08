@@ -8,7 +8,6 @@ import {
   deleteDoc,
   doc,
   query,
-  where,
   orderBy,
   onSnapshot,
   Timestamp
@@ -24,23 +23,24 @@ export function useSchedules(pairId: string | null) {
 
   useEffect(() => {
     if (!pairId) {
+      // pairIdがnullの場合、データ取得の必要がないため即座にloading=falseに設定
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
-      return;
+    } else {
+      const schedulesRef = collection(db, 'pairs', pairId, 'schedules');
+      const q = query(schedulesRef, orderBy('date', 'asc'));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const schedulesData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Schedule[];
+        setSchedules(schedulesData);
+        setLoading(false);
+      });
+
+      return unsubscribe;
     }
-
-    const schedulesRef = collection(db, 'pairs', pairId, 'schedules');
-    const q = query(schedulesRef, orderBy('date', 'asc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const schedulesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Schedule[];
-      setSchedules(schedulesData);
-      setLoading(false);
-    });
-
-    return unsubscribe;
   }, [pairId]);
 
   const addSchedule = async (scheduleData: Omit<Schedule, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {

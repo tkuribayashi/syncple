@@ -64,12 +64,12 @@ export interface QuickMessage {
 
 export interface ShoppingItem {
   id?: string;
-  name: string;
-  isPurchased: boolean;
-  purchasedBy: string | null;
-  purchasedAt: Timestamp | null;
+  pairId: string;
+  text: string;
+  isCompleted: boolean;
   createdBy: string;
   createdAt: Timestamp;
+  order: number;
 }
 
 export interface DinnerStatus {

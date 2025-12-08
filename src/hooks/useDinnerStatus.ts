@@ -25,31 +25,32 @@ export function useDinnerStatus(pairId: string | null) {
 
   useEffect(() => {
     if (!pairId || !user) {
+      // pairIdまたはuserがnullの場合、データ取得の必要がないため即座にloading=falseに設定
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
-      return;
+    } else {
+      const dinnerStatusRef = collection(db, 'pairs', pairId, 'dinnerStatus');
+      const q = query(dinnerStatusRef, where('date', '==', today));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const statuses = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as DinnerStatus[];
+
+        // 自分のステータスを探す
+        const mine = statuses.find(s => s.userId === user.uid);
+        setMyStatus(mine || null);
+
+        // パートナーのステータスを探す
+        const partner = statuses.find(s => s.userId !== user.uid);
+        setPartnerStatus(partner || null);
+
+        setLoading(false);
+      });
+
+      return unsubscribe;
     }
-
-    const dinnerStatusRef = collection(db, 'pairs', pairId, 'dinnerStatus');
-    const q = query(dinnerStatusRef, where('date', '==', today));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const statuses = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as DinnerStatus[];
-
-      // 自分のステータスを探す
-      const mine = statuses.find(s => s.userId === user.uid);
-      setMyStatus(mine || null);
-
-      // パートナーのステータスを探す
-      const partner = statuses.find(s => s.userId !== user.uid);
-      setPartnerStatus(partner || null);
-
-      setLoading(false);
-    });
-
-    return unsubscribe;
   }, [pairId, user, today]);
 
   const updateStatus = async (status: string) => {

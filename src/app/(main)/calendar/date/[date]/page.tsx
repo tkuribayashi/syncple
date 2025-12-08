@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSchedules } from '@/hooks/useSchedules';
 import { useScheduleCategories } from '@/hooks/useScheduleCategories';
 import { usePair } from '@/hooks/usePair';
-import { Schedule } from '@/types';
 import { format, parse } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getSchedulesForDate, isMultiDaySchedule, getScheduleDayNumber, getScheduleDurationDays } from '@/utils/scheduleHelpers';
@@ -22,27 +21,22 @@ export default function DailyDetailPage() {
   const { categories } = useScheduleCategories(userProfile?.pairId || null);
   const { partner } = usePair();
 
-  const [date, setDate] = useState<Date | null>(null);
-  const [dailySchedules, setDailySchedules] = useState<Schedule[]>([]);
-
-  useEffect(() => {
-    if (!dateStr) return;
+  const date = useMemo(() => {
+    if (!dateStr) return null;
 
     try {
-      const parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
-      setDate(parsedDate);
-
-      if (schedules.length > 0) {
-        const schedulesForDate = getSchedulesForDate(schedules, parsedDate);
-        setDailySchedules(schedulesForDate);
-      } else {
-        setDailySchedules([]);
-      }
+      return parse(dateStr, 'yyyy-MM-dd', new Date());
     } catch (error) {
       console.error('Invalid date format:', error);
       router.push('/calendar');
+      return null;
     }
-  }, [dateStr, schedules, router]);
+  }, [dateStr, router]);
+
+  const dailySchedules = useMemo(() => {
+    if (!date) return [];
+    return getSchedulesForDate(schedules, date);
+  }, [date, schedules]);
 
   if (loading || !date) {
     return (

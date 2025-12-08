@@ -13,8 +13,6 @@ const EMPTY_CATEGORY_LABEL = 'カテゴリなし';
 interface ScheduleCategoriesSectionProps {
   categories: ScheduleCategoryMap;
   categoryOrder: ScheduleCategoryKey[];
-  setCategories: (categories: ScheduleCategoryMap) => void;
-  setCategoryOrder: (order: ScheduleCategoryKey[]) => void;
   saveCategories: (categories: ScheduleCategoryMap) => Promise<void>;
   reorderCategories: (order: ScheduleCategoryKey[]) => Promise<void>;
   addCategory: (label: string) => Promise<ScheduleCategoryKey>;
@@ -27,8 +25,6 @@ interface ScheduleCategoriesSectionProps {
 export default function ScheduleCategoriesSection({
   categories,
   categoryOrder,
-  setCategories,
-  setCategoryOrder,
   saveCategories,
   reorderCategories,
   addCategory,
@@ -48,30 +44,29 @@ export default function ScheduleCategoriesSection({
     if (!newValue.trim()) return;
 
     const updated = { ...categories, [key]: newValue.trim() };
-    setCategories(updated);
     setEditingCategory(null);
 
     setSaving(true);
     try {
       await saveCategories(updated);
+      showSuccessToast('カテゴリを保存しました');
     } catch (error) {
       showErrorToast(error, 'saveCategory');
+      setEditingCategory({ key, value: newValue });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReorderCategories = async (reorderedItems: Array<{ id: string; content: any }>) => {
+  const handleReorderCategories = async (reorderedItems: Array<{ id: string; content: React.ReactNode }>) => {
     const newOrder = reorderedItems.map((item) => item.id as ScheduleCategoryKey);
-
-    setCategoryOrder(newOrder);
 
     setSaving(true);
     try {
       await reorderCategories(newOrder);
+      showSuccessToast('並び替えを保存しました');
     } catch (error) {
       showErrorToast(error, 'reorderCategories');
-      setCategoryOrder([...categoryOrder]);
     } finally {
       setSaving(false);
     }

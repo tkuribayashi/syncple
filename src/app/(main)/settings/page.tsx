@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuickMessages } from '@/hooks/useQuickMessages';
-import { useScheduleCategories, ScheduleCategoryKey, ScheduleCategoryMap } from '@/hooks/useScheduleCategories';
-import { useDinnerStatusOptions, DinnerStatusMap, DinnerStatusKey } from '@/hooks/useDinnerStatusOptions';
+import { useScheduleCategories } from '@/hooks/useScheduleCategories';
+import { useDinnerStatusOptions } from '@/hooks/useDinnerStatusOptions';
 import QuickMessagesSection from './components/QuickMessagesSection';
 import ScheduleCategoriesSection from './components/ScheduleCategoriesSection';
 import DinnerStatusSection from './components/DinnerStatusSection';
@@ -16,10 +16,10 @@ type CalendarViewMode = '2weeks' | 'month';
 
 export default function SettingsPage() {
   const { signOut, userProfile, updateDisplayName, fcm } = useAuth();
-  const { quickMessages: loadedMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
+  const { quickMessages, loading: loadingMessages, saveQuickMessages } = useQuickMessages(userProfile?.pairId || null);
   const {
-    categories: loadedCategories,
-    categoryOrder: loadedCategoryOrder,
+    categories,
+    categoryOrder,
     loading: loadingCategories,
     saveCategories,
     reorderCategories,
@@ -28,8 +28,8 @@ export default function SettingsPage() {
     getCategoryUsageCount,
   } = useScheduleCategories(userProfile?.pairId || null);
   const {
-    statuses: loadedStatuses,
-    statusOrder: loadedStatusOrder,
+    statuses: dinnerStatuses,
+    statusOrder,
     loading: loadingStatuses,
     saveStatuses,
     reorderStatuses,
@@ -37,65 +37,14 @@ export default function SettingsPage() {
     deleteStatus,
     getStatusUsageCount,
   } = useDinnerStatusOptions(userProfile?.pairId || null);
-  const [quickMessages, setQuickMessages] = useState<string[]>([]);
-  const [categories, setCategories] = useState<ScheduleCategoryMap>({
-    remote: '',
-    office: '',
-    business_trip: '',
-    vacation: '',
-    outing: '',
-    other: '',
-  });
-  const [categoryOrder, setCategoryOrder] = useState<ScheduleCategoryKey[]>([
-    'remote',
-    'office',
-    'business_trip',
-    'vacation',
-    'outing',
-    'other',
-  ]);
-  const [dinnerStatuses, setDinnerStatuses] = useState<DinnerStatusMap>({
-    alone: '',
-    cooking: '',
-    cooking_together: '',
-    undecided: '',
-  });
-  const [statusOrder, setStatusOrder] = useState<DinnerStatusKey[]>([
-    'alone',
-    'cooking',
-    'cooking_together',
-    'undecided',
-  ]);
   const [saving, setSaving] = useState(false);
-  const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('2weeks');
 
-  useEffect(() => {
-    if (!loadingMessages) {
-      setQuickMessages([...loadedMessages]);
-    }
-  }, [loadedMessages, loadingMessages]);
-
-  useEffect(() => {
-    if (!loadingCategories) {
-      setCategories({ ...loadedCategories });
-      setCategoryOrder([...loadedCategoryOrder]);
-    }
-  }, [loadedCategories, loadedCategoryOrder, loadingCategories]);
-
-  useEffect(() => {
-    if (!loadingStatuses) {
-      setDinnerStatuses({ ...loadedStatuses });
-      setStatusOrder([...loadedStatusOrder]);
-    }
-  }, [loadedStatuses, loadedStatusOrder, loadingStatuses]);
-
-  // カレンダー表示モードをlocalStorageから読み込む
-  useEffect(() => {
+  // カレンダー表示モードをlocalStorageから読み込む（初期値のみ）
+  const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>(() => {
+    if (typeof window === 'undefined') return '2weeks';
     const saved = localStorage.getItem('calendarViewMode');
-    if (saved && (saved === '2weeks' || saved === 'month')) {
-      setCalendarViewMode(saved as CalendarViewMode);
-    }
-  }, []);
+    return (saved === '2weeks' || saved === 'month') ? saved : '2weeks';
+  });
 
   const handleChangeCalendarViewMode = (mode: CalendarViewMode) => {
     setCalendarViewMode(mode);
@@ -117,7 +66,6 @@ export default function SettingsPage() {
       {/* クイックメッセージ設定 */}
       <QuickMessagesSection
         quickMessages={quickMessages}
-        setQuickMessages={setQuickMessages}
         saveQuickMessages={saveQuickMessages}
         saving={saving}
         setSaving={setSaving}
@@ -127,8 +75,6 @@ export default function SettingsPage() {
       <ScheduleCategoriesSection
         categories={categories}
         categoryOrder={categoryOrder}
-        setCategories={setCategories}
-        setCategoryOrder={setCategoryOrder}
         saveCategories={saveCategories}
         reorderCategories={reorderCategories}
         addCategory={addCategory}
@@ -142,8 +88,6 @@ export default function SettingsPage() {
       <DinnerStatusSection
         dinnerStatuses={dinnerStatuses}
         statusOrder={statusOrder}
-        setDinnerStatuses={setDinnerStatuses}
-        setStatusOrder={setStatusOrder}
         saveStatuses={saveStatuses}
         reorderStatuses={reorderStatuses}
         addStatus={addStatus}

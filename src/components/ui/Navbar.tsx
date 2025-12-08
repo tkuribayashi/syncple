@@ -9,6 +9,7 @@ export default function Navbar() {
   const navItems = [
     { href: '/', label: 'ホーム', icon: '🏠' },
     { href: '/calendar', label: 'カレンダー', icon: '📅' },
+    { href: '/shopping', label: 'お買い物', icon: '🛒' },
     { href: '/messages', label: 'メッセージ', icon: '💬' },
     { href: '/settings', label: '設定', icon: '⚙️' },
   ];

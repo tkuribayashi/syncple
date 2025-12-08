@@ -29,12 +29,13 @@ export default function InvitePage() {
     try {
       const result = await createPair();
       setGeneratedCode(result.inviteCode);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('ペア作成エラー:', err);
-      if (err.code === 'permission-denied') {
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'permission-denied') {
         setError('権限がありません。Firestoreルールをデプロイしてください。');
       } else {
-        setError(`ペアの作成に失敗しました: ${err.message || err.code || '不明なエラー'}`);
+        setError(`ペアの作成に失敗しました: ${error.message || error.code || '不明なエラー'}`);
       }
     } finally {
       setLoading(false);
@@ -49,12 +50,14 @@ export default function InvitePage() {
     try {
       await joinPair(inviteCode.toUpperCase());
       router.push('/');
-    } catch (err: any) {
-      if (err.message.includes('Invalid')) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      const message = error.message || '';
+      if (message.includes('Invalid')) {
         setError('無効な招待コードです');
-      } else if (err.message.includes('expired')) {
+      } else if (message.includes('expired')) {
         setError('招待コードの有効期限が切れています');
-      } else if (err.message.includes('complete')) {
+      } else if (message.includes('complete')) {
         setError('このペアは既に完成しています');
       } else {
         setError('ペアへの参加に失敗しました');

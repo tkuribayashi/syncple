@@ -93,6 +93,7 @@ export function useMessages(pairId: string | null, messageLimit: number = 50) {
 
     if (hasMyReaction) {
       // リアクションを削除
+       
       const { [user.uid]: _, ...rest } = currentReactions;
       await updateDoc(messageRef, { reactions: rest });
     } else {

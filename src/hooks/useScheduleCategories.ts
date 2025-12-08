@@ -47,7 +47,8 @@ export function useScheduleCategories(pairId: string | null) {
         } else {
           const data = categoriesDoc.data();
           // _order と updatedAt を除外して、カテゴリのみを抽出
-          const { _order, updatedAt, ...categoryData } = data;
+           
+          const { _order, updatedAt: _updatedAt, ...categoryData } = data;
 
           setCategories(categoryData as ScheduleCategoryMap);
 
@@ -149,6 +150,7 @@ export function useScheduleCategories(pairId: string | null) {
     if (!pairId) throw new Error('Pair ID not found');
 
     // カテゴリの削除
+     
     const { [key]: _, ...remainingCategories } = categories;
     const newOrder = categoryOrder.filter((k) => k !== key);
 

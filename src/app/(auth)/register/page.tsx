@@ -45,8 +45,9 @@ export default function RegisterPage() {
     try {
       await signUp(email, password, displayName);
       router.push('/invite');
-    } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
+    } catch (err: unknown) {
+      const error = err as { code?: string };
+      if (error.code === 'auth/email-already-in-use') {
         setError('このメールアドレスは既に使用されています');
       } else {
         setError('登録に失敗しました。もう一度お試しください。');

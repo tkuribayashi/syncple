@@ -8,7 +8,6 @@ import { useQuickMessages } from '@/hooks/useQuickMessages';
 import { format } from 'date-fns';
 import { extractVariable, replaceVariable, Variable } from '@/utils/templateVariables';
 import NumberInputModal from '@/components/NumberInputModal';
-import { toast } from '@/components/ui/Toast';
 import Loading from '@/components/ui/Loading';
 import { showErrorToast } from '@/utils/errorHandling';
 import { hasId } from '@/utils/typeGuards';
@@ -202,7 +201,6 @@ export default function MessagesPage() {
             [...messages].reverse().map((message) => {
               const isMyMessage = message.senderId === user?.uid;
               const hasReaction = message.reactions && Object.keys(message.reactions).length > 0;
-              const myReaction = message.reactions && user?.uid ? message.reactions[user.uid] : null;
 
               const handleMyMessageMouseDown = (e: React.MouseEvent) => {
                 if (isMyMessage && message.id) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface NumberInputModalProps {
   isOpen: boolean;
@@ -16,11 +16,16 @@ export default function NumberInputModal({
   onCancel,
 }: NumberInputModalProps) {
   const [value, setValue] = useState(defaultValue);
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    // Reset value only when modal first opens (transitions from false to true)
+    if (isOpen && !prevIsOpenRef.current) {
+      // モーダルが開いたときに入力値をdefaultValueにリセット（開くたびに1回のみ実行）
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(defaultValue);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, defaultValue]);
 
   if (!isOpen) return null;

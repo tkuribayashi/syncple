@@ -57,8 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ユーザープロフィールをリアルタイムで監視
   useEffect(() => {
     if (!user) {
-      setUserProfile(null);
-      setLoading(false);
       return;
     }
 
